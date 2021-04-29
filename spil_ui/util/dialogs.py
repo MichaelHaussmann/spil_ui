@@ -20,7 +20,9 @@ from Qt.QtWidgets import QMessageBox, QApplication, QWidget, QFileDialog, QInput
 from Qt.QtWidgets import QDialog
 from Qt.QtCore import QCoreApplication
 
-from spil_ui import conf
+# from spil_ui import conf
+class conf():
+    application_name = 'Pikko'
 
 
 class ChoiceBox(QDialog):

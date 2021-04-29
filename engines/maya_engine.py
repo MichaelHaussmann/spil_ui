@@ -11,7 +11,8 @@ class MayaEngine(PythonEngine):
     name = 'Maya'
     implements = ['explore','open']
 
-    def open(self, sid):
+    @staticmethod
+    def open(sid):
         """
         Open file
         """

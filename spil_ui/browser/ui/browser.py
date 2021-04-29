@@ -40,7 +40,7 @@ ui_path = os.path.join(os.path.dirname(__file__), 'qt/browser.ui')
 searchers = ['*', ',', '>', '<']
 entity_version_slit = 'version'  # key that separates entity blocs/lists representation and the table bloc representation
 table_bloc_columns = ['Sid', 'Time', 'Size']
-table_bloc_callbacks = ['getTime', 'getSize']  #SMELL a bit.
+table_bloc_callbacks = ['getTime', 'getSize']  #TEMPORARY - will be proper data go_through
 
 class Browser(QtWidgets.QMainWindow):
 
@@ -59,7 +59,7 @@ class Browser(QtWidgets.QMainWindow):
 
         self.buttons = []
         self.previous_sid = Sid()
-        self.previous_search = Sid()
+        # self.previous_search = Sid()
 
         # Init of the SearchSid
         # Either passed argument, or current from engine, or last from history, or empty Sid
@@ -73,13 +73,9 @@ class Browser(QtWidgets.QMainWindow):
             search = Sid('*')
         print(search)
 
-        self.current_sid = Sid()  # TODO: if search returns a single Sid, make it the current. (or the first from search?)
-
+        self.current_sid = Sid()
         self.connect_events()
-
         self.launch_search(search)
-        # self.boot_entities()
-        # self.init_actions()
 
     # Build / Edit UI
     def boot_entities(self):
@@ -118,7 +114,7 @@ class Browser(QtWidgets.QMainWindow):
                     item.setSelected(True)
                     list_widget.setCurrentItem(item)
                     self.current_sid = i.get_as(key)
-                    self.update_current()
+                    self.update_current_sid()
 
             list_widget.itemClicked.connect(self.select_search)
 
@@ -131,7 +127,7 @@ class Browser(QtWidgets.QMainWindow):
             self.entities_lo.setTabOrder(self.sid_widgets)
         """
 
-    def build_versions(self):  #IDEA: load only last versions, with a drop down for all versions (https://openpype.io/docs/artist_tools#load-another-version)
+    def build_versions(self):  # IDEA: load only last versions, with a drop down for all versions (https://openpype.io/docs/artist_tools#load-another-version)
 
         parent = self.versions_tw
         parent.clear()
@@ -144,16 +140,19 @@ class Browser(QtWidgets.QMainWindow):
 
         if self.search:
 
-            if self.search.get('ext'):
-                search = self.search.get_with(version='*', state='*')
-                search = search.string
-            else:
-                search = self.search.get_with(version='*', state='*', ext='maya,movie')  # FIXME
-                # self.search = self.search.get_with(version='*', state='*', ext='*')  # FIXME
-                search = search.string
+            search = self.search
 
-            #if self.search.get_as('version'):
-            #    search = self.search.get_as('version').string + '/**'  # FIXME : this is not nice.
+            if not any((True if s in str(search) else False for s in searchers)):
+                search = search.get_with(version='*')
+
+            for key in ['version', 'state']:
+                if not self.search.get(key):
+                    search = search.get_with(key=key, value='*')
+
+            if not self.search.get('ext'):
+                search = search.get_with(ext='maya,movie')  # FIXME
+
+            search = search.string
 
             print('now searching')
             print(search)
@@ -166,16 +165,16 @@ class Browser(QtWidgets.QMainWindow):
 
                 for i, func in enumerate(table_bloc_callbacks):
                     func = getattr(self.data, func)
-                    addTableWidgetItem(parent, None, func(sid), row=row, column=i+1)
+                    addTableWidgetItem(parent, sid, func(sid), row=row, column=i+1)
 
-                print('{} // {} ?'.format(sid, self.search))
+                # print('{} // {} ?'.format(sid, self.search))
                 if sid == self.search:  # FIXME: must also work during update
                     item.setSelected(True)
                     parent.setCurrentItem(item)
                     self.current_sid = sid
-                    self.update_current()
+                    self.update_current_sid()
 
-                parent.itemClicked.connect(self.select_search)
+                # parent.itemClicked.connect(self.select_search)
 
             parent.setStyleSheet(table_css)
             parent.resizeColumnsToContents()
@@ -217,10 +216,25 @@ class Browser(QtWidgets.QMainWindow):
     - wait for user input -> we update the current sid
     - on signal, we update the search sid, current -> search, and loop again.
     """
-    def select_search(self, item = None, sid = None):
-        print('In select search, from {} -> {}'.format(self.sender().objectName(), item.data(UserRole)))
+    def set_sid_from_history(self):
+        selected = self.sid_history_cb.itemText(self.sid_history_cb.currentIndex())
+        if selected:
+            print('selected ' + selected)
+            self.launch_search(Sid(selected))
+
+    def select_search(self, item=None):
         sid = item.data(UserRole)
         self.launch_search(sid)
+
+        """ Experimental "sticky search" : we just update the last key of the item. The problem is if the user wants to refresh the rest... 
+        if self.sender() == self.versions_tw:
+            self.launch_search(sid)
+        else:
+            sid = Sid(sid)
+            key = sid.keytype
+            search = self.search.get_with(key=key, value=sid.get(key))
+            self.launch_search(search)
+        """
 
     def input_search(self):
         self.launch_search(self.input_sid_le.text())
@@ -251,69 +265,13 @@ class Browser(QtWidgets.QMainWindow):
         self.search = search_sid
         self.input_sid_le.setText(self.search.string)
 
-        # launch new cycle
-        print('New search cycle launch: ' + str(search_sid))
-        if (search_sid.basetype == search_sid.type) or not self.previous_search:  # a way to say its a root type #FIXME
-            self.boot_entities()
-        else:
-            self.build_entities()  # or rebuild root or versions ...
+        self.boot_entities()
 
-        # self.previous_search = self.search
-
-    def update_current(self):  #FIXME: rename
+    def update_current_sid(self):
         self.current_sid_lb.setText(self.current_sid.string)
-        # self.input_sid_le.setText(self.search.string)
         if self.current_sid != self.previous_sid:
             self.previous_sid = self.current_sid
             self.init_actions()
-
-    """
-    def refresh_sid(self):  #TODO: here also select the columns according to Sid. Must be a perfect circle.
-        pass
-    
-    def get_current_sid(self, item=None, sid=None):
-
-        if item:
-            print(item)
-            sid = item.data(UserRole)
-
-        if sid:
-            print(sid)
-            self.current_sid = sid
-            self.current_to_search()
-            self.update_current()
-
-            if sid.basetype == sid.type:  # a way to say its a root type #FIXME
-                self.boot_entities()
-            else:
-                self.build_entities()  # or rebuild root or versions ...
-    
-    def current_to_search(self):
-        '''
-        Updates the search Sid depending on the Current Sid
-        Cases:
-        - we just add a '*' at the end
-        - we keep the search, but update keys existing in current sid
-        - need to handle entities and version searches
-        - how handle non Sid Searches ?
-        '''
-        search = self.search.copy()
-
-        for key in search.data.keys():
-            if self.current_sid.get(key):
-                self.search = self.search.get_with(key=key, value=self.current_sid.get(key))
-        else:
-            self.search = Sid(self.current_sid)
-        # if "incomplete", add a star at the end
-        if not self.current_sid.is_leaf():
-            self.search = Sid(str(self.search) + '/*')
-    """
-
-    def set_sid_from_history(self):
-        selected = self.sid_history_cb.itemText(self.sid_history_cb.currentIndex())
-        if selected:
-            print('selected ' + selected)
-            self.launch_search(Sid(selected))
 
     # Actions
     def init_actions(self):
@@ -404,6 +362,7 @@ class Browser(QtWidgets.QMainWindow):
         self.input_sid_le.returnPressed.connect(self.input_search)
         self.versions_tw.doubleClicked.connect(self.run_actions)
         self.sid_history_cb.currentIndexChanged.connect(self.set_sid_from_history)
+        self.versions_tw.itemClicked.connect(self.select_search)
 
     def showEvent(self, arg=None):
         self.sid_history = conf.sid_usage_history  # TODO : test this : no real refresh

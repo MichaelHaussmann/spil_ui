@@ -1,11 +1,18 @@
 import sys
-
+from action.broker import Broker
 
 class BaseEngine(object):
 
     name = 'Base'
     implements = []
     needs_confirm = []
+
+    def __init__(self):
+        self.action_broker = Broker()
+
+    def get_actions(self, sid):
+        actions = self.action_broker.get_actions(sid, self.name.lower())
+        return (a.get('name') for a in actions)
 
     def get_current_sid(self):
         """
