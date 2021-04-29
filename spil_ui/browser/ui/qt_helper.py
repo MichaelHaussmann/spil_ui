@@ -53,10 +53,8 @@ def addListWidgetItem(listWidget, data, label):
 def clear_layout(layout):
     for i in reversed(range(layout.count())):
         widgetToRemove = layout.itemAt(i).widget()
-        # remove it from the layout list
-        layout.removeWidget(widgetToRemove)
-        # remove it from the gui
-        widgetToRemove.deleteLater()  # setParent(None)
+        layout.removeWidget(widgetToRemove)  # remove it from the layout list
+        widgetToRemove.deleteLater()  # remove it from the gui  # setParent(None)
 
 
 def get_layout_widgets(layout):

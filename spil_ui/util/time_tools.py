@@ -25,6 +25,10 @@ def now():
 def toHumanReadableSecond(timestamp):
     return str(datetime.datetime.fromtimestamp(float( timestamp )).strftime('%Y-%m-%d %H:%M:%S'))
 
+def toHumanReadableLapse(timestamp):
+    return convertToHumanReadable(datetime.datetime.fromtimestamp(float( timestamp )).strftime('%Y-%m-%d %H:%M:%S.%f'))
+
+
 '''
 
 # Currently not used, not maintained

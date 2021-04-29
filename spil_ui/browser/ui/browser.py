@@ -46,15 +46,21 @@ class Browser(QtWidgets.QMainWindow):
     def __init__(self, search=None):
         super(Browser, self).__init__()
         QtCompat.loadUi(ui_path, self)
+        clear_layout(self.entities_lo)  # Because we start with a dummy Layout from designer
 
-        self.f = Files()
+        # init sources
+        self.data = Files()  # TODO: data framework
         self.uio = Dialogs()
         self.engine = engines.get()
+        self.sid_history = conf.sid_usage_history
         print('Loaded engine {}'.format(self.engine))
 
-        self.sid_history = conf.sid_usage_history
+        self.buttons = []
+        self.sid_widgets = OrderedDict()
+        self.previous_sid = Sid()
 
-        # Which we are opening: either passed search, or current open sid, or last from history, or empty Sid
+        # Init of the SearchSid
+        # Either passed argument, or current from engine, or last from history, or empty Sid
         if search:
             self.search = Sid(search)
         elif self.engine.get_current_sid():
@@ -65,43 +71,19 @@ class Browser(QtWidgets.QMainWindow):
             self.search = Sid('*')
         print(self.search)
 
-        self.current_sid = Sid()
+        self.current_sid = Sid()  # TODO: if search returns a single Sid, make it the current. (or the first from search?)
 
-        clear_layout(self.entities_lo)
-        self.buttons = []
-
-        self.sid_widgets = OrderedDict()
-
-        self.input_sid_le.returnPressed.connect(self.refresh_sid)
-        self.versions_tw.doubleClicked.connect(self.actions)
-
+        self.connect_events()
         self.build_entities()
+        self.init_actions()
 
-        self.initContextFeatures()
-
+    # Build / Edit UI
     def build_root(self):
         """ Builds root part: project, type """
         clear_layout(self.entities_lo)
         self.sid_widgets = OrderedDict()
         self.versions_tw.clear()
         self.build_entities()
-        pass
-
-    def clear_entities(self):
-
-        skip = True
-        for key in self.sid_widgets.keys():
-            if not self.search.get(key):  # or not self.current.get(key):
-                skip = False
-            if skip:
-                continue
-            list_widget = self.sid_widgets.get(key)
-            list_widget.clear()
-        if not skip:
-            self.clear_versions()
-
-    def clear_versions(self):
-        self.versions_tw.clear()
 
     def build_entities(self):
 
@@ -150,8 +132,8 @@ class Browser(QtWidgets.QMainWindow):
         parent = self.versions_tw
         parent.clear()
 
-        parent.setColumnCount(4)
-        parent.setHorizontalHeaderLabels(['Sid', 'Time', 'Size', 'User'])
+        parent.setColumnCount(3)
+        parent.setHorizontalHeaderLabels(['Sid', 'Time', 'Size'])
 
         parent.verticalHeader().setVisible(False)
         parent.verticalHeader().setDefaultSectionSize( 30 )
@@ -174,12 +156,12 @@ class Browser(QtWidgets.QMainWindow):
             for i, sid in enumerate(children):
                 sid= Sid(sid)
                 item = addTableWidgetItem(parent, sid, sid, row=i, column=0)
-                addTableWidgetItem(parent, None, self.f.getTime(sid.path, human=True), row=i, column=1)
+                addTableWidgetItem(parent, None, self.data.getTime(sid.path, human=True), row=i, column=1)
 
-                size = '{0:9.2f} Mo'.format((float(self.f.getSize(sid.path)) / (1024*1024)))
+                size = '{0:9.2f} Mo'.format((float(self.data.getSize(sid.path)) / (1024 * 1024)))
                 addTableWidgetItem(parent, None, size, row=i, column=2)
-                addTableWidgetItem(parent, None, self.f.getOwner(sid.path), row=i, column=3)
-                addTableWidgetItem(parent, None, '{0} Mo'.format((float(self.f.getSize(sid.path)) / (1024*1024))), row=i, column=4)
+                addTableWidgetItem(parent, None, '{0} Mo'.format((float(self.data.getSize(sid.path)) / (1024 * 1024))), row=i, column=3)
+                # addTableWidgetItem(parent, None, self.data.getOwner(sid.path), row=i, column=3)
 
                 if sid == self.search:  # FIXME: must also work during update
                     item.setSelected(True)
@@ -196,9 +178,29 @@ class Browser(QtWidgets.QMainWindow):
                 parent.setColumnWidth(1, 140)
                 parent.setColumnWidth(2, 100)
 
+    def clear_entities(self):
+
+        skip = True
+        for key in self.sid_widgets.keys():
+            if not self.search.get(key):  # or not self.current.get(key):
+                skip = False
+            if skip:
+                continue
+            list_widget = self.sid_widgets.get(key)
+            list_widget.clear()
+        if not skip:
+            self.clear_versions()
+
+    def clear_versions(self):
+        self.versions_tw.clear()
+
+    # Update / SID IO
     def update_current(self):
         self.current_sid_lb.setText(self.current_sid.string)
         self.input_sid_le.setText(self.search.string)
+        if self.current_sid != self.previous_sid:
+            self.previous_sid = self.current_sid
+            self.init_actions()
 
     def refresh_sid(self):  #TODO: here also select the columns according to Sid. Must be a perfect circle.
         self.get_current_sid(sid=Sid(self.input_sid_le.text()))
@@ -238,38 +240,14 @@ class Browser(QtWidgets.QMainWindow):
         # if "incomplete", add a star at the end  # TODO: define  "incomplete"
         self.search = Sid(str(self.search) + '/*')
 
-    def create_entity_widget(self, key):
+    def set_sid_from_history(self):
+        selected = self.sid_history_cb.itemText(self.sid_history_cb.currentIndex())
+        if selected:
+            print('selected ' + selected)
+            self.get_current_sid(sid=Sid(selected))
 
-        list_widget = QtWidgets.QListWidget()
-        list_widget.setObjectName(key)
-        self.entities_lo.addWidget(list_widget)
-        self.sid_widgets[key] = list_widget
-        return list_widget
-
-    def fill_history(self, sid=None):
-
-        self.sid_history_cb.clear()
-
-        if sid:
-            self.sid_history.append(str(sid))
-            self.sid_history = uniqfy(self.sid_history, reverse=True)
-            if len(self.sid_history) > conf.sid_usage_history_len:
-                self.sid_history.pop(0)
-
-            self.sid_history_cb.addItem(str(sid))
-        else:
-            self.sid_history_cb.addItem('')
-
-        for sid in reversed(self.sid_history):
-            """ #TODO: limit history to current engine
-            if not self.history_all_CB.isChecked():
-                tmp = Sid(sid=str(sid))
-                if tmp.get('ext') and tmp.get('ext') != conf.context_to_ext.get(self.ui_context):
-                    continue
-            """
-            self.sid_history_cb.addItem(str(sid))
-
-    def initContextFeatures(self):
+    # Actions
+    def init_actions(self):
 
         self.actions_gb.setTitle(self.engine.name.replace('_', ' ').capitalize())
         for b in self.buttons:
@@ -277,15 +255,15 @@ class Browser(QtWidgets.QMainWindow):
             b.deleteLater()
         self.buttons = []
 
-        for feature in self.engine.implements:
+        for feature in self.engine.get_actions(self.current_sid):
             button = QtWidgets.QPushButton(feature.replace('_', ' ').capitalize(), self)
-            button.setToolTip((getattr(self.engine, feature).__doc__ or '').strip().replace('\t', ''))
+            # button.setToolTip((getattr(self.engine, feature).__doc__ or '').strip().replace('\t', ''))
             button.setObjectName(feature)
-            button.clicked.connect(self.actions)
+            button.clicked.connect(self.run_actions)
             self.actions_hl.addWidget(button)
             self.buttons.append(button)
 
-    def actions(self):  # TODO: more advanced features with parameters or options
+    def run_actions(self):  # TODO: more advanced features with parameters or options
 
         if not self.current_sid:
             return
@@ -320,6 +298,43 @@ class Browser(QtWidgets.QMainWindow):
 
         except SpilException as e:
             self.uio.error('{0}'.format(e))
+
+    # Utils
+    def create_entity_widget(self, key):
+
+        list_widget = QtWidgets.QListWidget()
+        list_widget.setObjectName(key)
+        self.entities_lo.addWidget(list_widget)
+        self.sid_widgets[key] = list_widget
+        return list_widget
+
+    def fill_history(self, sid=None):
+
+        self.sid_history_cb.clear()
+
+        if sid:
+            self.sid_history.append(str(sid))
+            self.sid_history = uniqfy(self.sid_history, reverse=True)
+            if len(self.sid_history) > conf.sid_usage_history_len:
+                self.sid_history.pop(0)
+
+            self.sid_history_cb.addItem(str(sid))
+        else:
+            self.sid_history_cb.addItem('')
+
+        for sid in reversed(self.sid_history):
+            """ #TODO: limit history to current engine
+            if not self.history_all_CB.isChecked():
+                tmp = Sid(sid=str(sid))
+                if tmp.get('ext') and tmp.get('ext') != conf.context_to_ext.get(self.ui_context):
+                    continue
+            """
+            self.sid_history_cb.addItem(str(sid))
+
+    def connect_events(self):
+        self.input_sid_le.returnPressed.connect(self.refresh_sid)
+        self.versions_tw.doubleClicked.connect(self.run_actions)
+        self.sid_history_cb.currentIndexChanged.connect(self.set_sid_from_history)
 
     def showEvent(self, arg=None):
         self.sid_history = conf.sid_usage_history  # TODO : test this : no real refresh
