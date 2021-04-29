@@ -37,7 +37,10 @@ log = logging.getLogger('browser')
 UserRole = QtCore.Qt.UserRole
 ui_path = os.path.join(os.path.dirname(__file__), 'qt/browser.ui')
 
-searchers = ['*']
+searchers = ['*', ',', '>', '<']
+entity_version_slit = 'version'  # key that separates entity blocs/lists representation and the table bloc representation
+table_bloc_columns = ['Sid', 'Time', 'Size']
+table_bloc_callbacks = ['getTime', 'getSize']  #SMELL a bit.
 
 class Browser(QtWidgets.QMainWindow):
 
@@ -46,7 +49,6 @@ class Browser(QtWidgets.QMainWindow):
     def __init__(self, search=None):
         super(Browser, self).__init__()
         QtCompat.loadUi(ui_path, self)
-        clear_layout(self.entities_lo)  # Because we start with a dummy Layout from designer
 
         # init sources
         self.data = Files()  # TODO: data framework
@@ -56,29 +58,31 @@ class Browser(QtWidgets.QMainWindow):
         print('Loaded engine {}'.format(self.engine))
 
         self.buttons = []
-        self.sid_widgets = OrderedDict()
         self.previous_sid = Sid()
+        self.previous_search = Sid()
 
         # Init of the SearchSid
         # Either passed argument, or current from engine, or last from history, or empty Sid
         if search:
-            self.search = Sid(search)
+            search = Sid(search)
         elif self.engine.get_current_sid():
-            self.search = self.engine.get_current_sid()
+            search = self.engine.get_current_sid()
         elif self.sid_history:
-            self.search = Sid(self.sid_history[-1])
+            search = Sid(self.sid_history[-1])
         else:
-            self.search = Sid('*')
-        print(self.search)
+            search = Sid('*')
+        print(search)
 
         self.current_sid = Sid()  # TODO: if search returns a single Sid, make it the current. (or the first from search?)
 
         self.connect_events()
-        self.build_entities()
-        self.init_actions()
+
+        self.launch_search(search)
+        # self.boot_entities()
+        # self.init_actions()
 
     # Build / Edit UI
-    def build_root(self):
+    def boot_entities(self):
         """ Builds root part: project, type """
         clear_layout(self.entities_lo)
         self.sid_widgets = OrderedDict()
@@ -87,19 +91,19 @@ class Browser(QtWidgets.QMainWindow):
 
     def build_entities(self):
 
-        for key in self.search.data.keys():
+        for key in self.search.data.keys():  # traverses search_sid by key: project, type, ...
 
             if key == 'version':
                 self.build_versions()
                 return
 
-            if self.sid_widgets.get(key):  # does the widget for this key (project, type, seq, asset, etc.) already exist ?
+            if self.sid_widgets.get(key):  # if the widget already exists, we get it...
                 list_widget = self.sid_widgets.get(key)
-                if self.search.get(key) in searchers or not self.current_sid.get(key):
+                if self.search.get(key) in searchers or not self.current_sid.get(key):  # need to clear entities below
                     list_widget.clear()
                     self.clear_entities()
             else:
-                list_widget = self.create_entity_widget(key)
+                list_widget = self.create_entity_widget(key)  # ...else we create it
 
             if list_widget.count():
                 continue
@@ -116,7 +120,7 @@ class Browser(QtWidgets.QMainWindow):
                     self.current_sid = i.get_as(key)
                     self.update_current()
 
-            list_widget.itemClicked.connect(self.get_current_sid)
+            list_widget.itemClicked.connect(self.select_search)
 
             if self.search.get(key) in searchers:
                 break
@@ -132,8 +136,8 @@ class Browser(QtWidgets.QMainWindow):
         parent = self.versions_tw
         parent.clear()
 
-        parent.setColumnCount(3)
-        parent.setHorizontalHeaderLabels(['Sid', 'Time', 'Size'])
+        parent.setColumnCount(len(table_bloc_columns))
+        parent.setHorizontalHeaderLabels(table_bloc_columns)
 
         parent.verticalHeader().setVisible(False)
         parent.verticalHeader().setDefaultSectionSize( 30 )
@@ -141,44 +145,50 @@ class Browser(QtWidgets.QMainWindow):
         if self.search:
 
             if self.search.get('ext'):
-                self.search = self.search.get_with(version='*', state='*')
-                search = self.search.string
+                search = self.search.get_with(version='*', state='*')
+                search = search.string
             else:
-                self.search = self.search.get_with(version='*', state='*', ext='maya,movie')  # FIXME
-                search = self.search.string
-                # search = self.search.get_as('version').string + '/**'  # FIXME : this is not nice.
+                search = self.search.get_with(version='*', state='*', ext='maya,movie')  # FIXME
+                # self.search = self.search.get_with(version='*', state='*', ext='*')  # FIXME
+                search = search.string
+
+            #if self.search.get_as('version'):
+            #    search = self.search.get_as('version').string + '/**'  # FIXME : this is not nice.
 
             print('now searching')
             print(search)
             children = sorted(list(FS().get(search, as_sid=False)))
 
             parent.setRowCount(len(children))
-            for i, sid in enumerate(children):
+            for row, sid in enumerate(children):
                 sid= Sid(sid)
-                item = addTableWidgetItem(parent, sid, sid, row=i, column=0)
-                addTableWidgetItem(parent, None, self.data.getTime(sid.path, human=True), row=i, column=1)
+                item = addTableWidgetItem(parent, sid, sid, row=row, column=0)
 
-                size = '{0:9.2f} Mo'.format((float(self.data.getSize(sid.path)) / (1024 * 1024)))
-                addTableWidgetItem(parent, None, size, row=i, column=2)
-                addTableWidgetItem(parent, None, '{0} Mo'.format((float(self.data.getSize(sid.path)) / (1024 * 1024))), row=i, column=3)
-                # addTableWidgetItem(parent, None, self.data.getOwner(sid.path), row=i, column=3)
+                for i, func in enumerate(table_bloc_callbacks):
+                    func = getattr(self.data, func)
+                    addTableWidgetItem(parent, None, func(sid), row=row, column=i+1)
 
+                print('{} // {} ?'.format(sid, self.search))
                 if sid == self.search:  # FIXME: must also work during update
                     item.setSelected(True)
                     parent.setCurrentItem(item)
                     self.current_sid = sid
                     self.update_current()
 
-                parent.itemClicked.connect(self.get_current_sid)
+                parent.itemClicked.connect(self.select_search)
 
             parent.setStyleSheet(table_css)
             parent.resizeColumnsToContents()
-            if parent.columnWidth(0) < 120:
+            if parent.columnWidth(0) < 120:  #TODO Make dynamic
                 parent.setColumnWidth(0, 260)
                 parent.setColumnWidth(1, 140)
                 parent.setColumnWidth(2, 100)
 
     def clear_entities(self):
+        """
+        Clears entity widgets that are not in the search Sid (below the search).
+        If needed calls clear_versions. (#TODO makethis code better readable)
+        """
 
         skip = True
         for key in self.sid_widgets.keys():
@@ -188,23 +198,79 @@ class Browser(QtWidgets.QMainWindow):
                 continue
             list_widget = self.sid_widgets.get(key)
             list_widget.clear()
-        if not skip:
-            self.clear_versions()
+        # if not skip:
+        self.clear_versions()
 
     def clear_versions(self):
         self.versions_tw.clear()
 
     # Update / SID IO
-    def update_current(self):
-        self.current_sid_lb.setText(self.current_sid.string)
+    """
+    The circle is basically:
+    search -> results -> selection / input -> current -> search
+    
+    In detail the circle is:
+    - start with a search sid
+    - potentially add search terms to search sid, typically : /* at the end.
+    - boot / fill entities and versions with search sid and search results
+    - select with values from search sid by default -> we have a current sid 
+    - wait for user input -> we update the current sid
+    - on signal, we update the search sid, current -> search, and loop again.
+    """
+    def select_search(self, item = None, sid = None):
+        print('In select search, from {} -> {}'.format(self.sender().objectName(), item.data(UserRole)))
+        sid = item.data(UserRole)
+        self.launch_search(sid)
+
+    def input_search(self):
+        self.launch_search(self.input_sid_le.text())
+
+    def edit_search(self, search_sid):
+        """
+        If the search has no searchers ("*", ",", ...) it needs edit.
+        """
+        if any((True if s in str(search_sid) else False for s in searchers)):  # we check this first, because the Sid might not be "defined", eg. FTOT/A/PRP/VIAL/RIG/**/mov
+            print('edit_search {} -> {}'.format(search_sid, searchers))
+            return search_sid
+
+        if search_sid.is_leaf():
+            return search_sid
+
+        return Sid(str(search_sid) + '/*')
+
+    def launch_search(self, search_sid):
+        """
+        Receives an updated search, to start a new search cycle.
+        Called from history or the search sid input field.
+        """
+        print('New search cycle: ' + str(search_sid))
+        search_sid = Sid(search_sid)
+
+        # check if the search needs update
+        search_sid = self.edit_search(search_sid)
+        self.search = search_sid
         self.input_sid_le.setText(self.search.string)
+
+        # launch new cycle
+        print('New search cycle launch: ' + str(search_sid))
+        if (search_sid.basetype == search_sid.type) or not self.previous_search:  # a way to say its a root type #FIXME
+            self.boot_entities()
+        else:
+            self.build_entities()  # or rebuild root or versions ...
+
+        # self.previous_search = self.search
+
+    def update_current(self):  #FIXME: rename
+        self.current_sid_lb.setText(self.current_sid.string)
+        # self.input_sid_le.setText(self.search.string)
         if self.current_sid != self.previous_sid:
             self.previous_sid = self.current_sid
             self.init_actions()
 
+    """
     def refresh_sid(self):  #TODO: here also select the columns according to Sid. Must be a perfect circle.
-        self.get_current_sid(sid=Sid(self.input_sid_le.text()))
-
+        pass
+    
     def get_current_sid(self, item=None, sid=None):
 
         if item:
@@ -218,33 +284,36 @@ class Browser(QtWidgets.QMainWindow):
             self.update_current()
 
             if sid.basetype == sid.type:  # a way to say its a root type #FIXME
-                self.build_root()
+                self.boot_entities()
             else:
                 self.build_entities()  # or rebuild root or versions ...
-
+    
     def current_to_search(self):
-        """
+        '''
         Updates the search Sid depending on the Current Sid
         Cases:
         - we just add a '*' at the end
         - we keep the search, but update keys existing in current sid
         - need to handle entities and version searches
         - how handle non Sid Searches ?
-        """
-        search = self.search.get_with()  # TODO: a copy...
+        '''
+        search = self.search.copy()
+
         for key in search.data.keys():
             if self.current_sid.get(key):
                 self.search = self.search.get_with(key=key, value=self.current_sid.get(key))
         else:
             self.search = Sid(self.current_sid)
-        # if "incomplete", add a star at the end  # TODO: define  "incomplete"
-        self.search = Sid(str(self.search) + '/*')
+        # if "incomplete", add a star at the end
+        if not self.current_sid.is_leaf():
+            self.search = Sid(str(self.search) + '/*')
+    """
 
     def set_sid_from_history(self):
         selected = self.sid_history_cb.itemText(self.sid_history_cb.currentIndex())
         if selected:
             print('selected ' + selected)
-            self.get_current_sid(sid=Sid(selected))
+            self.launch_search(Sid(selected))
 
     # Actions
     def init_actions(self):
@@ -332,7 +401,7 @@ class Browser(QtWidgets.QMainWindow):
             self.sid_history_cb.addItem(str(sid))
 
     def connect_events(self):
-        self.input_sid_le.returnPressed.connect(self.refresh_sid)
+        self.input_sid_le.returnPressed.connect(self.input_search)
         self.versions_tw.doubleClicked.connect(self.run_actions)
         self.sid_history_cb.currentIndexChanged.connect(self.set_sid_from_history)
 
@@ -354,6 +423,7 @@ if __name__ == '__main__':
 
     sid = 'FTOT/A/CHR/COCO/MOD/V002/WIP/mov'
     sid = 'FTOT/S/SQ0001/SH0020/LAY/V002/WIP/mov'
+    sid = 'FTOT/S/SQ0001/SH0020/LAY/V002/WIP/ma'
     # 'FTOT/S/SQ0001/SH0020/LAY/*/*/movie,maya'
     # sid = '' # IMPORTANT: TEST THIS ALSO
     # sid = 'raj/a/char/romeo'
