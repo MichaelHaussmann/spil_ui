@@ -5,8 +5,8 @@ job_config = [
         'name': 'open_maya_scene',
         'match': ['*/*/**/maya'],
         'hooks': {},  # TBD
-        'import': 'maya_engine.MayaEngine',
-        'run': 'MayaEngine.open',
+        'import': 'test_max',
+        'run': 'test_max.open_maya_scene',
         'requires': ['pipe_maya'],
         'engine': ['maya'],
         # 'modes' : ['embedded']#

@@ -1,3 +1,5 @@
+import logging
+import importlib
 from action.job_conf import job_config
 from spil import LS, SpilException
 from action.action_conf import universal_actions, global_actions, engine_actions
@@ -71,11 +73,18 @@ class Broker(object):
         return jobs[0]
 
     def run_job(self, job, sid, engine):
-        func = getattr(engine, job.get("action"))  # TODO: replace hard coding
+        module = importlib.import_module(job.get("import"))  # TODO: replace hard coding
+        # importlib.reload(module)  # FIXME: why "AttributeError: 'module' object has no attribute 'reload'"
+        reload(module)
+        func = getattr(module, job.get("name"))  # TODO: replace hard coding
+        if not func:
+            logging.warning('Function "{0}" does not exist'.format(func))
         func(sid)
 
     def run_action(self, name, sid, engine):
         job = self.get_job(sid, name)
+        if not job:
+            return
         self.run_job(job, sid, engine)
 
     def __key_matches(self, sid, search_sids):

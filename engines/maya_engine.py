@@ -1,6 +1,5 @@
 import maya.cmds as cmds
 
-from engines import Path
 from spil import Sid, SpilException
 
 from engines.python_engine import PythonEngine
@@ -10,24 +9,6 @@ class MayaEngine(PythonEngine):
 
     name = 'Maya'
     implements = ['explore','open']
-
-    @staticmethod
-    def open(sid):
-        """
-        Open file
-        """
-        # Set env variable / set Workspace
-        try:
-            path = Path(Sid(sid).path)
-        except SpilException as e:
-            print('Path for sid "{}" not found ({})'.format(sid, e))
-            return
-
-        if not path.exists():
-            print('Path for sid "{}" does not exist ({})'.format(sid, path))
-            return
-
-        cmds.file(path, open=True, force=True)  # FIXME: force ?
 
     def save_next(self, sid, options={}):
         """

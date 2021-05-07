@@ -34,11 +34,6 @@ class PythonEngine(BaseEngine):  #FIXME: use rez to launch softwares
         else:
             subprocess.Popen(["xdg-open", path])
 
-    def open(self, sid):
-        """
-        Open file
-        """
-        pass  # use rez
 
 
 
