@@ -21,6 +21,9 @@ class BaseEngine(object):
         """
         return None
 
+    def run_action(self, name, sid):
+        self.action_broker.run_action(name, sid, self)
+
     def __str__(self):
         return '{} @ {}'.format(self.__class__.__name__, sys.executable)
 

@@ -308,16 +308,8 @@ class Browser(QtWidgets.QMainWindow):
             if not self.uio.warn('This function may alter the scene and is not undoable. Are you sure?', withCancel=True):
                 return
 
-        func = getattr(self.engine, sender)
-
-        if not func:
-            log.warn('Function "{0}" does not exist'.format(func))
-            return
-
-        log.debug('Calling "{0}" with "{1}" '.format(func, sid))
         try:
-
-            func(sid)  # TODO : options, return value for user feedback
+            self.engine.run_action(sender, sid)
             self.fill_history(sid)  # done at the end because sid might have changed
 
         except RuntimeError as e:

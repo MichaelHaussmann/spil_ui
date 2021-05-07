@@ -63,6 +63,21 @@ class Broker(object):
         matches = filter(None, (x if (self.__key_matches(sid, x.get('match')) or ('all' in x.get('match'))) else None for x in matching_actions))
         return list(matches)
 
+    def get_job(self, sid, name):
+        jobs = self.get_jobs(sid, name)
+        if not jobs:
+            print("Cannot find a job.")  # TODO: change for log.error
+            return None
+        return jobs[0]
+
+    def run_job(self, job, sid, engine):
+        func = getattr(engine, job.get("action"))  # TODO: replace hard coding
+        func(sid)
+
+    def run_action(self, name, sid, engine):
+        job = self.get_job(sid, name)
+        self.run_job(job, sid, engine)
+
     def __key_matches(self, sid, search_sids):
         """
         Returns True as soon as the Sid matches a seach from the given search_sids list.
