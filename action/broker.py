@@ -73,13 +73,26 @@ class Broker(object):
         return jobs[0]
 
     def run_job(self, job, sid):
+        # Data check
+        if "import" not in job:
+            logging.error("Cannot execute '{}' job.".format(job))
+            return
+
+        # Import the module from the job
         module = importlib.import_module(job.get("import"))  # TODO: replace hard coding
         # importlib.reload(module)  # FIXME: why "AttributeError: 'module' object has no attribute 'reload'"
-        reload(module)
+        reload(module)  # TODO: we can remove this
+
+        # Get the function of the job
         func = getattr(module, job.get("name"))  # TODO: replace hard coding
         if not func:
             logging.warning('Function "{0}" does not exist'.format(func))
-        func(sid)
+
+        # Execute function
+        args = []
+        if "batch" in job:
+            args = [job.get("batch").get("command")]
+        func(sid, *args)
 
     def run_action(self, name, sid):
         job = self.get_job(sid, name)
