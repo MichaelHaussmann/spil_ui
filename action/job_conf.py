@@ -33,12 +33,14 @@ job_config = [
     },
     {
         'action': 'play',
-        'name': 'play',
+        'name': 'play_movie',
         'description': 'Launches a movie player',
         'match': ['*/*/**/movie'],
-        'batch':{ 'command': 'djv',
-                 'send': 'path' },
-        'requires': [],
+        'import': 'test_max',
+        'run': 'test_max.play_movie',
+        'batch':{'command': r'C:\Program Files\DJV\bin\djv_view.exe',  # TODO: to define with REZ?
+                 'send': 'path'},
+        'requires': ['pipe_maya'],  # TODO: to put in another repo
         'engine': ['all']
     },
 
@@ -139,5 +141,4 @@ drafts = [
         'script': 'maya_util.publishes.publish_mod_ma',
         'requires': ['']
     },
-
 ]
