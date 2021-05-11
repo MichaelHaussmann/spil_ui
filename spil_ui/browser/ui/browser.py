@@ -282,10 +282,10 @@ class Browser(QtWidgets.QMainWindow):
             b.deleteLater()
         self.buttons = []
 
-        for feature in self.engine.get_actions(self.current_sid):
-            button = QtWidgets.QPushButton(feature.replace('_', ' ').capitalize(), self)
-            # button.setToolTip((getattr(self.engine, feature).__doc__ or '').strip().replace('\t', ''))
-            button.setObjectName(feature)
+        for action in self.engine.get_actions(self.current_sid):
+            button = QtWidgets.QPushButton(action.get("label"), self)
+            # button.setToolTip((getattr(self.engine, action.get("name")).__doc__ or '').strip().replace('\t', ''))
+            button.setObjectName(action.get("name"))
             button.clicked.connect(self.run_actions)
             self.actions_hl.addWidget(button)
             self.buttons.append(button)

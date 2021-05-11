@@ -11,8 +11,7 @@ class BaseEngine(object):
         self.action_broker = Broker()
 
     def get_actions(self, sid):
-        actions = self.action_broker.get_actions(sid, self.name.lower())
-        return (a.get('name') for a in actions)
+        return self.action_broker.get_actions(sid, self.name.lower())
 
     def get_current_sid(self):
         """
