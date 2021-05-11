@@ -72,7 +72,7 @@ class Broker(object):
             return None
         return jobs[0]
 
-    def run_job(self, job, sid, engine):
+    def run_job(self, job, sid):
         module = importlib.import_module(job.get("import"))  # TODO: replace hard coding
         # importlib.reload(module)  # FIXME: why "AttributeError: 'module' object has no attribute 'reload'"
         reload(module)
@@ -81,11 +81,11 @@ class Broker(object):
             logging.warning('Function "{0}" does not exist'.format(func))
         func(sid)
 
-    def run_action(self, name, sid, engine):
+    def run_action(self, name, sid):
         job = self.get_job(sid, name)
         if not job:
             return
-        self.run_job(job, sid, engine)
+        self.run_job(job, sid)
 
     def __key_matches(self, sid, search_sids):
         """
