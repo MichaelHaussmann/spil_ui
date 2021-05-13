@@ -68,7 +68,7 @@ class Broker(object):
     def get_job(self, sid, name):
         jobs = self.get_jobs(sid, name)
         if not jobs:
-            print("Cannot find a job.")  # TODO: change for log.error
+            logging.error("Cannot find a job.")  # TODO: change for error popup window
             return None
         return jobs[0]
 
@@ -102,7 +102,7 @@ class Broker(object):
 
     def __key_matches(self, sid, search_sids):
         """
-        Returns True as soon as the Sid matches a seach from the given search_sids list.
+        Returns True as soon as the Sid matches a search from the given search_sids list.
         False otherwise.
         """
         sid = str(sid)
