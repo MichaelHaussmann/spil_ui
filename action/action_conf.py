@@ -63,7 +63,6 @@ universal_actions = [  # All Engines, all sids
 ]
 
 
-
 """{
         'name': 'publish',
         'label': 'Publish',
@@ -71,6 +70,3 @@ universal_actions = [  # All Engines, all sids
         'match': ['*/A/*/*/*/*', '*/S/*/*/*/*'],
         'engine': ['maya', 'hou', 'nk']
     }"""
-
-
-

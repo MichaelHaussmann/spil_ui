@@ -108,9 +108,9 @@ class Broker(object):
         sid = str(sid)
         fs = LS([sid])
         for search in search_sids:
-            #print('Matching {} // {} ?'.format(sid, search))
+            # print('Matching {} // {} ?'.format(sid, search))
             if fs.get_one(search, as_sid=False) == sid:
-                #print('--------------------> match')
+                # print('--------------------> match')
                 return True
         return False
 
@@ -124,7 +124,7 @@ if __name__ == '__main__':
     setLevel(WARN)
 
     selection = random.sample(example_sids.sids, 200)
-    #selection = example_sids.sids[:100]
+    # selection = example_sids.sids[:100]
     b = Broker()
     # selection = ['CBM/S/SQ0001/SH0240/ANI/V050/WIP/mov']
     for sid in selection:
@@ -140,7 +140,6 @@ if __name__ == '__main__':
         for job in jobs:
             print('Job : {} -> {} '.format(sid, job.get('name')))
 
-
     if False:
 
         actions = b.get_actions(sid)
@@ -154,8 +153,6 @@ if __name__ == '__main__':
             # print('            Job : {} -> {} '.format(sid, [m.get('name') for m in jobs]))
 
         print('')
-
-
 
 # sid = 'raj/a/char/juliet/low/design/v002/w/mp4'
 #    sid = Sid(sid)
