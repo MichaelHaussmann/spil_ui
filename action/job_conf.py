@@ -43,6 +43,16 @@ job_config = [
         'requires': ['pipe_maya'],  # TODO: to put in another repo
         'engine': ['all']
     },
+    {
+        'action': 'build',
+        'name': 'build_mod',
+        'description': 'Build the modeling scene of the specified asset.',
+        'match': ['*/A/*/*/MOD'],
+        'import': 'tools.build.build_mod',
+        'run': 'run',
+        'requires': ['pipe_maya'],
+        'engine': ['maya']
+    }
 
 ]
 

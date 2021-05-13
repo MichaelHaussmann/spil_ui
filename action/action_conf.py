@@ -26,7 +26,7 @@ engine_actions = [  # engine specific and sid specific
         'name': 'build',
         'label': 'Build',
         'description': 'Build a new scene for this task/variant',
-        'match': ['*/A/*/*/*/*', '*/S/*/*/*/*'],
+        'match': ['*/A/*/*/*', '*/S/*/*/*/*'],
         'engine': ['maya', 'hou', 'nk']
     },
 ]
