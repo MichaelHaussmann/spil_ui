@@ -5,7 +5,7 @@ job_config = [
         'name': 'open_maya_scene',
         'match': ['*/*/**/maya'],
         'hooks': {},  # TBD
-        'import': 'test_max',
+        'import': 'pipe_maya.test_max',
         'run': 'open_maya_scene',
         'requires': ['pipe_maya'],
         'engine': ['maya'],
@@ -36,7 +36,7 @@ job_config = [
         'name': 'play_movie',
         'description': 'Launches a movie player',
         'match': ['*/*/**/movie'],
-        'import': 'test_max',
+        'import': 'pipe_maya.test_max',
         'run': 'play_movie',
         'batch':{'command': r'C:\Program Files\DJV\bin\djv_view.exe',  # TODO: to define with REZ?
                  'send': 'path'},
@@ -48,7 +48,7 @@ job_config = [
         'name': 'build_mod',
         'description': 'Build the modeling scene of the specified asset.',
         'match': ['*/A/*/*/MOD'],
-        'import': 'tools.build.build_mod',
+        'import': 'pipe_maya.tools.build.build_mod',
         'run': 'run',
         'requires': ['pipe_maya'],
         'engine': ['maya']
