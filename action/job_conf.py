@@ -6,7 +6,7 @@ job_config = [
         'match': ['*/*/**/maya'],
         'hooks': {},  # TBD
         'import': 'test_max',
-        'run': 'test_max.open_maya_scene',
+        'run': 'open_maya_scene',
         'requires': ['pipe_maya'],
         'engine': ['maya'],
         # 'modes' : ['embedded']#
@@ -37,7 +37,7 @@ job_config = [
         'description': 'Launches a movie player',
         'match': ['*/*/**/movie'],
         'import': 'test_max',
-        'run': 'test_max.play_movie',
+        'run': 'play_movie',
         'batch':{'command': r'C:\Program Files\DJV\bin\djv_view.exe',  # TODO: to define with REZ?
                  'send': 'path'},
         'requires': ['pipe_maya'],  # TODO: to put in another repo

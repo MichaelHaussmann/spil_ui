@@ -79,12 +79,10 @@ class Broker(object):
             return
 
         # Import the module from the job
-        module = importlib.import_module(job.get("import"))  # TODO: replace hard coding
-        # importlib.reload(module)  # FIXME: why "AttributeError: 'module' object has no attribute 'reload'"
-        reload(module)  # TODO: we can remove this
+        module = importlib.import_module(job.get("import"))
 
         # Get the function of the job
-        func = getattr(module, job.get("name"))  # TODO: replace hard coding
+        func = getattr(module, job.get("run"))  # TODO: replace hard coding
         if not func:
             logging.warning('Function "{0}" does not exist'.format(func))
 
