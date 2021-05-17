@@ -87,10 +87,7 @@ class Broker(object):
             logging.warning('Function "{0}" does not exist'.format(func))
 
         # Execute function
-        args = []
-        if "batch" in job:
-            args = [job.get("batch").get("command")]
-        func(sid, *args)
+        func(sid)
 
     def run_action(self, name, sid):
         job = self.get_job(sid, name)

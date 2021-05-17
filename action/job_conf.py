@@ -38,8 +38,6 @@ job_config = [
         'match': ['*/*/**/movie'],
         'import': 'pipe_action.libs.files',
         'run': 'play_movie',
-        'batch':{'command': r'C:\Program Files\DJV\bin\djv_view.exe',  # TODO: to define with REZ?
-                 'send': 'path'},
         'requires': ['pipe_action'],
         'engine': ['all']
     },
