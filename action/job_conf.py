@@ -28,7 +28,7 @@ job_config = [
         'match': ['all'],
         'import': 'pipe_action.libs.files',
         'run': 'explore',
-        'requires': [],
+        'requires': ['pipe_action'],
         'engine': ['all']  #
     },
     {
