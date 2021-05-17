@@ -26,8 +26,8 @@ job_config = [
         'name': 'explore',
         'description': 'Opens the file explorer',
         'match': ['all'],
-        'import': 'python_engine.PythonEngine',
-        'run': 'PythonEngine.explore',
+        'import': 'pipe_action.libs.files',
+        'run': 'explore',
         'requires': [],
         'engine': ['all']  #
     },
