@@ -36,11 +36,11 @@ job_config = [
         'name': 'play_movie',
         'description': 'Launches a movie player',
         'match': ['*/*/**/movie'],
-        'import': 'pipe_maya.test_max',
+        'import': 'pipe_action.libs.files',
         'run': 'play_movie',
         'batch':{'command': r'C:\Program Files\DJV\bin\djv_view.exe',  # TODO: to define with REZ?
                  'send': 'path'},
-        'requires': ['pipe_maya'],  # TODO: to put in another repo
+        'requires': ['pipe_action'],
         'engine': ['all']
     },
     {
