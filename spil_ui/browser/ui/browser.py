@@ -32,6 +32,8 @@ from data.files import Files
 import engines
 from spil_ui.util.dialogs import Dialogs
 
+from pipe_action.libs import projects
+
 log = logging.getLogger('browser')
 
 UserRole = QtCore.Qt.UserRole
@@ -76,6 +78,10 @@ class Browser(QtWidgets.QMainWindow):
         self.current_sid = Sid()
         self.connect_events()
         self.launch_search(search)
+
+        # Define action of "Create Project" and "Create Asset" buttons
+        self.create_project_b.clicked.connect(self.create_project)
+        self.create_asset_b.clicked.connect(self.create_asset)
 
     # Build / Edit UI
     def boot_entities(self):
@@ -349,6 +355,16 @@ class Browser(QtWidgets.QMainWindow):
                     continue
             """
             self.sid_history_cb.addItem(str(sid))
+
+    def create_project(self):
+        result, message = projects.create_project("TEST_CREATE_PROJECT", 25, 1920, 1080)
+        if result is True:
+            self.uio.inform(message)
+        else:
+            self.uio.warn(message)
+
+    def create_asset(self):
+        self.uio.warn("'Create Asset' button not implemented yet!")
 
     def connect_events(self):
         self.input_sid_le.returnPressed.connect(self.input_search)
