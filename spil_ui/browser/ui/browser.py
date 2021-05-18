@@ -19,7 +19,7 @@ import logging
 from collections import OrderedDict
 
 # Uses Qt.py
-from Qt import QtCore, QtCompat, QtWidgets
+from Qt import QtCore, QtCompat, QtWidgets, QtGui
 from spil.util.log import DEBUG, setLevel, WARN
 
 from spil.util.utils import uniqfy  # FIXME: deep import
@@ -33,11 +33,13 @@ import engines
 from spil_ui.util.dialogs import Dialogs
 
 from pipe_action.libs import projects
+from pipe_action import conf as pipe_conf
 
 log = logging.getLogger('browser')
 
 UserRole = QtCore.Qt.UserRole
 ui_path = os.path.join(os.path.dirname(__file__), 'qt/browser.ui')
+create_project_ui = os.path.join(os.path.dirname(__file__), 'qt/create_project_dialog.ui')
 
 searchers = ['*', ',', '>', '<']
 entity_version_slit = 'version'  # key that separates entity blocs/lists representation and the table bloc representation
@@ -357,12 +359,8 @@ class Browser(QtWidgets.QMainWindow):
             """
             self.sid_history_cb.addItem(str(sid))
 
-    def create_project(self):
-        result, message = projects.create_project("TEST_CREATE_PROJECT", 25, 1920, 1080)
-        if result is True:
-            self.uio.inform(message)
-        else:
-            self.uio.warn(message)
+    def create_project(self):  # TODO: limit to only one "Create Project" window
+        CreateProject().show()
 
     def create_asset(self):
         self.uio.warn("'Create Asset' button not implemented yet!")
@@ -380,8 +378,58 @@ class Browser(QtWidgets.QMainWindow):
     def closeEvent(self, arg=None):
         try:
             conf.set('sid_usage_history', self.sid_history)
-        except:
+        except Exception:
             pass
+
+
+class CreateProject(QtWidgets.QDialog):
+    def __init__(self):
+        super(CreateProject, self).__init__()
+        QtCompat.loadUi(create_project_ui, self)
+        self.uio = Dialogs()
+
+        # Populate FPS combo box with pipeline config values
+        self.fps_cb.clear()
+        [self.fps_cb.addItem(str(value)) for value in pipe_conf.FPS_VALUES]
+
+        # Limit the usage of the width and the height resolution lines edit with integers only
+        only_integers = QtGui.QIntValidator()
+        self.width_le.setValidator(only_integers)
+        self.height_le.setValidator(only_integers)
+
+        # Connect the "Create Project" button
+        self.create_project_b.clicked.connect(self.create_project)
+
+    def create_project(self):
+        # Check settings input in the UI
+        if not self.check_project_settings():
+            return
+
+        # Try to create the project
+        result, message = projects.create_project(
+            project_name=self.name_le.text(),
+            fps=int(self.fps_cb.currentText()),
+            width=int(self.width_le.text()),
+            height=int(self.height_le.text())
+        )
+        if result is True:
+            self.uio.inform(message)
+            self.close()
+        else:
+            self.uio.warn(message)
+
+    def check_project_settings(self):
+        if not self.name_le.text():
+            self.uio.error("Please specify a project name.")
+            return False
+        if not self.width_le.text():
+            self.uio.error("Please specify a width pixel value.")
+            return False
+        if not self.height_le.text():
+            self.uio.error("Please specify a height pixel value.")
+            return False
+        return True
+
 
 if __name__ == '__main__':
 
@@ -407,4 +455,3 @@ if __name__ == '__main__':
     win.show()
 
     app.exec_()
-
