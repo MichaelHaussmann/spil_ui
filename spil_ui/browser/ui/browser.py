@@ -42,7 +42,8 @@ ui_path = os.path.join(os.path.dirname(__file__), 'qt/browser.ui')
 searchers = ['*', ',', '>', '<']
 entity_version_slit = 'version'  # key that separates entity blocs/lists representation and the table bloc representation
 table_bloc_columns = ['Sid', 'Time', 'Size']
-table_bloc_callbacks = ['getTime', 'getSize']  #TEMPORARY - will be proper data go_through
+table_bloc_callbacks = ['getTime', 'getSize']  # TEMPORARY - will be proper data go_through
+
 
 class Browser(QtWidgets.QMainWindow):
 
@@ -142,13 +143,13 @@ class Browser(QtWidgets.QMainWindow):
         parent.setHorizontalHeaderLabels(table_bloc_columns)
 
         parent.verticalHeader().setVisible(False)
-        parent.verticalHeader().setDefaultSectionSize( 30 )
+        parent.verticalHeader().setDefaultSectionSize(30)
 
         if self.search:
 
             search = self.search
 
-            if not any((True if s in str(search) else False for s in searchers)):
+            if all(s not in str(search) for s in searchers):
                 search = search.get_with(version='*')
 
             for key in ['version', 'state']:
@@ -166,7 +167,7 @@ class Browser(QtWidgets.QMainWindow):
 
             parent.setRowCount(len(children))
             for row, sid in enumerate(children):
-                sid= Sid(sid)
+                sid = Sid(sid)
                 item = addTableWidgetItem(parent, sid, sid, row=row, column=0)
 
                 for i, func in enumerate(table_bloc_callbacks):
@@ -184,7 +185,7 @@ class Browser(QtWidgets.QMainWindow):
 
             parent.setStyleSheet(table_css)
             parent.resizeColumnsToContents()
-            if parent.columnWidth(0) < 120:  #TODO Make dynamic
+            if parent.columnWidth(0) < 120:  # TODO Make dynamic
                 parent.setColumnWidth(0, 260)
                 parent.setColumnWidth(1, 140)
                 parent.setColumnWidth(2, 100)
@@ -192,7 +193,7 @@ class Browser(QtWidgets.QMainWindow):
     def clear_entities(self):
         """
         Clears entity widgets that are not in the search Sid (below the search).
-        If needed calls clear_versions. (#TODO makethis code better readable)
+        If needed calls clear_versions. (#TODO make this code better readable)
         """
 
         skip = True
@@ -249,7 +250,7 @@ class Browser(QtWidgets.QMainWindow):
         """
         If the search has no searchers ("*", ",", ...) it needs edit.
         """
-        if any((True if s in str(search_sid) else False for s in searchers)):  # we check this first, because the Sid might not be "defined", eg. FTOT/A/PRP/VIAL/RIG/**/mov
+        if any(s in str(search_sid) for s in searchers):  # we check this first, because the Sid might not be "defined", eg. FTOT/A/PRP/VIAL/RIG/**/mov
             print('edit_search {} -> {}'.format(search_sid, searchers))
             return search_sid
 
@@ -319,7 +320,7 @@ class Browser(QtWidgets.QMainWindow):
             self.fill_history(sid)  # done at the end because sid might have changed
 
         except RuntimeError as e:
-            self.uio.error('Could not call "{0}" with "{1}".\nError : {2}'.format(func, sid, e))
+            self.uio.error('Could not call "{0}" with "{1}".\nError : {2}'.format(sender, sid, e))
 
         except SpilException as e:
             self.uio.error('{0}'.format(e))
@@ -401,7 +402,6 @@ if __name__ == '__main__':
     print(search)
     for i in FS().get(search):
         print(i)
-
 
     win = Browser(search=sid)
     win.show()
