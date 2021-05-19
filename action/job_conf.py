@@ -50,7 +50,16 @@ job_config = [
         'run': 'run',
         'requires': ['pipe_maya'],
         'engine': ['maya']
-    }
+    },
+    {
+        'action': 'create',
+        'name': 'create_project',
+        'match': ['*'],
+        'import': 'pipe_action.tools.project',
+        'run': 'show_create_project_ui',
+        'requires': ['pipe_action'],
+        'engine': ['all']
+    },
 
 ]
 
