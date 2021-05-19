@@ -134,14 +134,6 @@ drafts = [
         'requires': ['pipe_maya']
     },
     {
-        'action': 'create',
-        'name': 'create_project',
-        'match': ['*'],
-        'hooks': {},  # TBD
-        'script': 'maya_util.publishes.publish_mod_ma',
-        'requires': ['']
-    },
-    {
         'action': 'edit',
         'name': 'edit',
         'match': ['*/*/**'],
