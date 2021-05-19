@@ -79,10 +79,6 @@ class Browser(QtWidgets.QMainWindow):
         self.connect_events()
         self.launch_search(search)
 
-        # Define action of "Create Project" and "Create Asset" buttons
-        self.create_project_b.clicked.connect(self.create_project)
-        self.create_asset_b.clicked.connect(self.create_asset)
-
     # Build / Edit UI
     def boot_entities(self):
         """ Builds root part: project, type """
@@ -355,12 +351,6 @@ class Browser(QtWidgets.QMainWindow):
                     continue
             """
             self.sid_history_cb.addItem(str(sid))
-
-    def create_project(self):  # TODO: limit to only one "Create Project" window
-        project.CreateProject().show()
-
-    def create_asset(self):
-        self.uio.warn("'Create Asset' button not implemented yet!")
 
     def connect_events(self):
         self.input_sid_le.returnPressed.connect(self.input_search)
