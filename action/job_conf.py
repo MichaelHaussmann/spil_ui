@@ -60,6 +60,15 @@ job_config = [
         'requires': ['pipe_action'],
         'engine': ['all']
     },
+    {
+        'action': 'create',
+        'name': 'create_asset',
+        'match': ['*/A/*'],
+        'import': 'pipe_action.tools.asset',
+        'run': 'show_create_asset_ui',
+        'requires': ['pipe_action'],
+        'engine': ['all']
+    },
 
 ]
 
