@@ -118,7 +118,7 @@ class Dialogs(QWidget):
 
         #value, boul = QInputDialog.getText(self,  conf.application_name, QApplication.translate("Dialogs", str(label), str(default)))
         value, ok = QInputDialog.getText(self, conf.application_name, label, QLineEdit.Normal, default)
-        return value if ok else ''
+        return value, ok
 
     def getTextField(self, label='Please enter', default='', size=(300, 300)):
         dlg = QInputDialog(self)
