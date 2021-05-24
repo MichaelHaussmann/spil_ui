@@ -64,7 +64,7 @@ job_config = [
         'action': 'create',
         'name': 'create_asset',
         'match': ['*/A/*'],
-        'import': 'pipe_action.tools.asset',
+        'import': 'pipe_action.tools.asset.ui.create_asset_ui',
         'run': 'CreateAssetUI',
         'requires': ['pipe_action'],
         'engine': ['all']
