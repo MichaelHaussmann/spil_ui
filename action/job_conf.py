@@ -73,8 +73,8 @@ job_config = [
         'action': 'create',
         'name': 'create_shot',
         'match': ['*/S/*'],
-        'import': 'pipe_action.tools.shot',
-        'run': 'show_create_shot_ui',
+        'import': 'pipe_action.tools.shot.ui.create_shot_ui',
+        'run': 'CreateShotUI',
         'requires': ['pipe_action'],
         'engine': ['all']
     },
