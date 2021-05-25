@@ -78,6 +78,15 @@ job_config = [
         'requires': ['pipe_action'],
         'engine': ['all']
     },
+    {
+        'action': 'create',
+        'name': 'create_sequence',
+        'match': ['*/S'],
+        'import': 'pipe_action.tools.sequence.ui.create_sequence_ui',
+        'run': 'CreateSequenceUI',
+        'requires': ['pipe_action'],
+        'engine': ['all']
+    },
 
 ]
 

@@ -43,7 +43,7 @@ global_actions = [  # All Engines, sid specific
         'name': 'create',
         'label': 'Create',
         'description': 'Creates a new Entity (Project, Asset or Shot)',
-        'match': ['*', '*/A,S/*'],
+        'match': ['*', '*/A,S/*', '*/S'],
     },
     {
         'name': 'edit',
