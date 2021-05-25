@@ -52,6 +52,16 @@ job_config = [
         'engine': ['maya']
     },
     {
+        'action': 'build',
+        'name': 'build_rig',
+        'description': 'Build the rigging scene of the specified asset.',
+        'match': ['*/A/*/*/RIG'],
+        'import': 'pipe_maya.tools.build.ui.build_rig_ui',
+        'run': 'run',
+        'requires': ['pipe_maya'],
+        'engine': ['maya']
+    },
+    {
         'action': 'create',
         'name': 'create_project',
         'match': ['*'],
