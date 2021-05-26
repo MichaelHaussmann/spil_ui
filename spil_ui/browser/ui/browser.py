@@ -14,7 +14,6 @@ If not, see <https://www.gnu.org/licenses/>.
 """
 
 import os
-import sys
 import logging
 from collections import OrderedDict
 
@@ -31,7 +30,6 @@ from spil import FS, Sid, SpilException, conf
 from data.files import Files
 import engines
 from spil_ui.util.dialogs import Dialogs
-from pipe_action.tools import project
 
 log = logging.getLogger('browser')
 
@@ -373,6 +371,8 @@ class Browser(QtWidgets.QMainWindow):
 
 
 if __name__ == '__main__':
+
+    import sys
 
     setLevel(WARN)
 
