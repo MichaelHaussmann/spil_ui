@@ -1,5 +1,5 @@
 import sys
-from action.broker import Broker
+from pipe_action.core.broker import Broker
 
 class BaseEngine(object):
 
