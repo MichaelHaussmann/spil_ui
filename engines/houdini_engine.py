@@ -16,7 +16,7 @@ class HoudiniEngine(PythonEngine):
         """
         Open file
         """
-        #TODO : Set env variable / set Workspace
+        # TODO : Set env variable / set Workspace
         try:
             path = Path(Sid(sid).path)
         except SpilException as e:

@@ -369,9 +369,6 @@ class Browser(QtWidgets.QMainWindow):
             pass
 
 
-
-
-
 if __name__ == '__main__':
 
     setLevel(WARN)
