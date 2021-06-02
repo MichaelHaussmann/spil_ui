@@ -13,14 +13,21 @@ If not, see <https://www.gnu.org/licenses/>.
 
 """
 
+"""
+TODO:
+- tab order (and arrows left/right) for mouseless navigation
+- arrow keys (up/down) in listwidgets
+- last action in conf for double click / default action
+- actions refresh browser when done
+- code options (maya/movie/OK/WIP, etc) in a dynamic way - currently all hard coded.  
+
+"""
 import os
-import sys
 import logging
 from collections import OrderedDict
 
 # Uses Qt.py
-from Qt import QtCore, QtCompat, QtWidgets
-from spil.util.log import DEBUG, setLevel, WARN
+from Qt import QtCore, QtCompat, QtWidgets, QtGui
 
 from spil.util.utils import uniqfy  # FIXME: deep import
 
@@ -39,8 +46,10 @@ ui_path = os.path.join(os.path.dirname(__file__), 'qt/browser.ui')
 
 searchers = ['*', ',', '>', '<']
 entity_version_slit = 'version'  # key that separates entity blocs/lists representation and the table bloc representation
-table_bloc_columns = ['Sid', 'Time', 'Size']
-table_bloc_callbacks = ['getTime', 'getSize']  #TEMPORARY - will be proper data go_through
+table_bloc_columns = ['Sid', 'Comment', 'Size', 'Time']
+table_bloc_callbacks = ['getComment', 'getSize', 'getTime']  # TEMPORARY - will be proper data go_through
+search_reset_keys = ['project', 'type', 'cat', 'seq']  # these fields trigger a reset of the search sid - else we are "sticky" and only change the given key.
+
 
 class Browser(QtWidgets.QMainWindow):
 
@@ -55,7 +64,7 @@ class Browser(QtWidgets.QMainWindow):
         self.uio = Dialogs()
         self.engine = engines.get()
         self.sid_history = conf.sid_usage_history
-        print('Loaded engine {}'.format(self.engine))
+        log.debug('Loaded engine {}'.format(self.engine))
 
         self.buttons = []
         self.previous_sid = Sid()
@@ -71,7 +80,7 @@ class Browser(QtWidgets.QMainWindow):
             search = Sid(self.sid_history[-1])
         else:
             search = Sid('*')
-        print(search)
+        log.debug(search)
 
         self.current_sid = Sid()
         self.connect_events()
@@ -116,7 +125,11 @@ class Browser(QtWidgets.QMainWindow):
                     self.current_sid = i.get_as(key)
                     self.update_current_sid()
 
+            # list_widget.itemDoubleClicked.connect(self.select_search)
             list_widget.itemClicked.connect(self.select_search)
+            # list_widget.itemSelectionChanged.connect(self.select_search)
+
+            list_widget.setFixedWidth(list_widget.sizeHintForColumn(0) + 2 * list_widget.frameWidth() + 20)
 
             if self.search.get(key) in searchers:
                 break
@@ -136,38 +149,54 @@ class Browser(QtWidgets.QMainWindow):
         parent.setHorizontalHeaderLabels(table_bloc_columns)
 
         parent.verticalHeader().setVisible(False)
-        parent.verticalHeader().setDefaultSectionSize( 30 )
+        parent.verticalHeader().setDefaultSectionSize(30)
 
         if self.search:
 
+            # we keep the global self.search but change fields for version, state, ext.
             search = self.search
 
-            if not any((True if s in str(search) else False for s in searchers)):
-                search = search.get_with(version='*')
+            if all(s not in str(search) for s in searchers):
+                search = search.get_with(version='>' if self.last_cb.isChecked() else '*')
 
-            for key in ['version', 'state']:
-                if not self.search.get(key):
-                    search = search.get_with(key=key, value='*')
+            # state  # FIXME: this is all hard coded, should not
+            state_filter = []
+            if self.wip_cb.isChecked():
+                state_filter.append('WIP')
+            if self.ok_cb.isChecked():
+                state_filter.append('OK')
 
-            if not self.search.get('ext'):
-                search = search.get_with(ext='maya,movie')  # FIXME
+            # ext
+            ext_filter = []
+            if self.maya_cb.isChecked():
+                ext_filter.append('maya')
+            if self.movie_cb.isChecked():
+                ext_filter.append('movie')
 
+            if self.search.get('version') in ['>', '*', None]:
+                search = search.get_with(version='>' if self.last_cb.isChecked() else '*')
+
+            # if not self.search.get('state'):
+            search = search.get_with(state=','.join(state_filter) or '*',
+                                     ext=','.join(ext_filter) or '*')
             search = search.string
 
-            print('now searching')
-            print(search)
+            log.debug('now searching')
+            log.debug(search)
+            self.input_sid_le.setText(search)
+
             children = sorted(list(FS().get(search, as_sid=False)))
 
             parent.setRowCount(len(children))
             for row, sid in enumerate(children):
-                sid= Sid(sid)
+                sid = Sid(sid)
                 item = addTableWidgetItem(parent, sid, sid, row=row, column=0)
 
                 for i, func in enumerate(table_bloc_callbacks):
                     func = getattr(self.data, func)
                     addTableWidgetItem(parent, sid, func(sid), row=row, column=i+1)
 
-                # print('{} // {} ?'.format(sid, self.search))
+                # log.debug('{} // {} ?'.format(sid, self.search))
                 if sid == self.search:  # FIXME: must also work during update
                     item.setSelected(True)
                     parent.setCurrentItem(item)
@@ -178,7 +207,7 @@ class Browser(QtWidgets.QMainWindow):
 
             parent.setStyleSheet(table_css)
             parent.resizeColumnsToContents()
-            if parent.columnWidth(0) < 120:  #TODO Make dynamic
+            if parent.columnWidth(0) < 120:  # TODO Make dynamic
                 parent.setColumnWidth(0, 260)
                 parent.setColumnWidth(1, 140)
                 parent.setColumnWidth(2, 100)
@@ -186,7 +215,7 @@ class Browser(QtWidgets.QMainWindow):
     def clear_entities(self):
         """
         Clears entity widgets that are not in the search Sid (below the search).
-        If needed calls clear_versions. (#TODO makethis code better readable)
+        If needed calls clear_versions. (#TODO make this code better readable)
         """
 
         skip = True
@@ -219,22 +248,24 @@ class Browser(QtWidgets.QMainWindow):
     def set_sid_from_history(self):
         selected = self.sid_history_cb.itemText(self.sid_history_cb.currentIndex())
         if selected:
-            print('selected ' + selected)
+            log.debug('selected ' + selected)
             self.launch_search(Sid(selected))
 
     def select_search(self, item=None):
         sid = item.data(UserRole)
-        self.launch_search(sid)
+        #self.launch_search(sid)
 
-        """ Experimental "sticky search" : we just update the last key of the item. The problem is if the user wants to refresh the rest... 
+        """ Experimental "sticky search" : we just update the last key of the item. The problem is if the user wants to refresh the rest... """
         if self.sender() == self.versions_tw:
             self.launch_search(sid)
         else:
             sid = Sid(sid)
             key = sid.keytype
-            search = self.search.get_with(key=key, value=sid.get(key))
-            self.launch_search(search)
-        """
+            if key not in search_reset_keys:
+                search = self.search.get_with(key=key, value=sid.get(key))
+                self.launch_search(search)
+            else:
+                self.launch_search(sid)
 
     def input_search(self):
         self.launch_search(self.input_sid_le.text())
@@ -243,8 +274,8 @@ class Browser(QtWidgets.QMainWindow):
         """
         If the search has no searchers ("*", ",", ...) it needs edit.
         """
-        if any((True if s in str(search_sid) else False for s in searchers)):  # we check this first, because the Sid might not be "defined", eg. FTOT/A/PRP/VIAL/RIG/**/mov
-            print('edit_search {} -> {}'.format(search_sid, searchers))
+        if any(s in str(search_sid) for s in searchers):  # we check this first, because the Sid might not be "defined", eg. FTOT/A/PRP/VIAL/RIG/**/mov
+            log.debug('edit_search {} -> {}'.format(search_sid, searchers))
             return search_sid
 
         if search_sid.is_leaf():
@@ -257,7 +288,7 @@ class Browser(QtWidgets.QMainWindow):
         Receives an updated search, to start a new search cycle.
         Called from history or the search sid input field.
         """
-        print('New search cycle: ' + str(search_sid))
+        log.debug('New search cycle: ' + str(search_sid))
         search_sid = Sid(search_sid)
 
         # check if the search needs update
@@ -282,10 +313,10 @@ class Browser(QtWidgets.QMainWindow):
             b.deleteLater()
         self.buttons = []
 
-        for feature in self.engine.get_actions(self.current_sid):
-            button = QtWidgets.QPushButton(feature.replace('_', ' ').capitalize(), self)
-            # button.setToolTip((getattr(self.engine, feature).__doc__ or '').strip().replace('\t', ''))
-            button.setObjectName(feature)
+        for action in self.engine.get_actions(self.current_sid):
+            button = QtWidgets.QPushButton(action.get("label"), self)
+            # button.setToolTip((getattr(self.engine, action.get("name")).__doc__ or '').strip().replace('\t', ''))
+            button.setObjectName(action.get("name"))
             button.clicked.connect(self.run_actions)
             self.actions_hl.addWidget(button)
             self.buttons.append(button)
@@ -308,20 +339,13 @@ class Browser(QtWidgets.QMainWindow):
             if not self.uio.warn('This function may alter the scene and is not undoable. Are you sure?', withCancel=True):
                 return
 
-        func = getattr(self.engine, sender)
-
-        if not func:
-            log.warn('Function "{0}" does not exist'.format(func))
-            return
-
-        log.debug('Calling "{0}" with "{1}" '.format(func, sid))
         try:
-
-            func(sid)  # TODO : options, return value for user feedback
+            self.engine.run_action(sender, sid)
             self.fill_history(sid)  # done at the end because sid might have changed
+            self.launch_search(sid)
 
         except RuntimeError as e:
-            self.uio.error('Could not call "{0}" with "{1}".\nError : {2}'.format(func, sid, e))
+            self.uio.error('Could not call "{0}" with "{1}".\nError : {2}'.format(sender, sid, e))
 
         except SpilException as e:
             self.uio.error('{0}'.format(e))
@@ -363,6 +387,12 @@ class Browser(QtWidgets.QMainWindow):
         self.versions_tw.doubleClicked.connect(self.run_actions)
         self.sid_history_cb.currentIndexChanged.connect(self.set_sid_from_history)
         self.versions_tw.itemClicked.connect(self.select_search)
+        self.maya_cb.clicked.connect(self.build_versions)
+        self.movie_cb.clicked.connect(self.build_versions)
+        self.wip_cb.clicked.connect(self.build_versions)
+        self.ok_cb.clicked.connect(self.build_versions)
+        self.last_cb.clicked.connect(self.build_versions)
+        # QtWidgets.QShortcut(QtCore.Qt.Key_Up, self.centralwidget, self.select_search)  # TODO: arrow keys in listwidgets
 
     def showEvent(self, arg=None):
         self.sid_history = conf.sid_usage_history  # TODO : test this : no real refresh
@@ -371,32 +401,19 @@ class Browser(QtWidgets.QMainWindow):
     def closeEvent(self, arg=None):
         try:
             conf.set('sid_usage_history', self.sid_history)
-        except:
+        except Exception:
             pass
+
 
 if __name__ == '__main__':
 
-    setLevel(WARN)
+    from spil.util.log import DEBUG, setLevel, WARN, ERROR
+    setLevel(ERROR)
 
-    app = QtWidgets.QApplication(sys.argv)
+    app = QtWidgets.QApplication([])
 
-    sid = 'FTOT/A/CHR/COCO/MOD/V002/WIP/mov'
-    sid = 'FTOT/S/SQ0001/SH0020/LAY/V002/WIP/mov'
     sid = 'FTOT/S/SQ0001/SH0020/LAY/V002/WIP/ma'
-    # 'FTOT/S/SQ0001/SH0020/LAY/*/*/movie,maya'
-    # sid = '' # IMPORTANT: TEST THIS ALSO
-    # sid = 'raj/a/char/romeo'
-    sid = Sid(sid)
-    print(sid)
-    search = sid.get_with(version='*', state='*', ext='maya,movie')
-    print('search:')
-    print(search)
-    for i in FS().get(search):
-        print(i)
-
-
     win = Browser(search=sid)
     win.show()
 
     app.exec_()
-

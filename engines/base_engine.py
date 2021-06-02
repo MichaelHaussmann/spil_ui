@@ -1,5 +1,6 @@
 import sys
-from action.broker import Broker
+from pipe_action.core.broker import Broker
+
 
 class BaseEngine(object):
 
@@ -11,8 +12,7 @@ class BaseEngine(object):
         self.action_broker = Broker()
 
     def get_actions(self, sid):
-        actions = self.action_broker.get_actions(sid, self.name.lower())
-        return (a.get('name') for a in actions)
+        return self.action_broker.get_actions(sid, self.name.lower())
 
     def get_current_sid(self):
         """
@@ -20,6 +20,9 @@ class BaseEngine(object):
         Might not be always implemented.
         """
         return None
+
+    def run_action(self, name, sid):
+        self.action_broker.run_action(name, sid)
 
     def __str__(self):
         return '{} @ {}'.format(self.__class__.__name__, sys.executable)
