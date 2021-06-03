@@ -50,6 +50,7 @@ table_bloc_columns = ['Sid', 'Comment', 'Size', 'Time']
 table_bloc_callbacks = ['getComment', 'getSize', 'getTime']  # TEMPORARY - will be proper data go_through
 search_reset_keys = ['project', 'type', 'cat', 'seq']  # these fields trigger a reset of the search sid - else we are "sticky" and only change the given key.
 
+sid_colors = {'published': QtGui.QColor(207, 229, 85)}
 
 class Browser(QtWidgets.QMainWindow):
 
@@ -172,6 +173,8 @@ class Browser(QtWidgets.QMainWindow):
                 ext_filter.append('maya')
             if self.movie_cb.isChecked():
                 ext_filter.append('movie')
+            # if self.cache_cb.isChecked():
+            #    ext_filter.append('cache')
 
             if self.search.get('version') in ['>', '*', None]:
                 search = search.get_with(version='>' if self.last_cb.isChecked() else '*')
@@ -190,7 +193,8 @@ class Browser(QtWidgets.QMainWindow):
             parent.setRowCount(len(children))
             for row, sid in enumerate(children):
                 sid = Sid(sid)
-                item = addTableWidgetItem(parent, sid, sid, row=row, column=0)
+                sid_color = sid_colors.get('published') if sid.get_with(state='OK').exists() else None
+                item = addTableWidgetItem(parent, sid, sid, row=row, column=0, fgcolor=sid_color)
 
                 for i, func in enumerate(table_bloc_callbacks):
                     func = getattr(self.data, func)
@@ -389,6 +393,7 @@ class Browser(QtWidgets.QMainWindow):
         self.versions_tw.itemClicked.connect(self.select_search)
         self.maya_cb.clicked.connect(self.build_versions)
         self.movie_cb.clicked.connect(self.build_versions)
+        # self.cache_cb.clicked.connect(self.build_versions)
         self.wip_cb.clicked.connect(self.build_versions)
         self.ok_cb.clicked.connect(self.build_versions)
         self.last_cb.clicked.connect(self.build_versions)
@@ -407,8 +412,8 @@ class Browser(QtWidgets.QMainWindow):
 
 if __name__ == '__main__':
 
-    from spil.util.log import DEBUG, setLevel, WARN, ERROR
-    setLevel(ERROR)
+    from spil.util.log import DEBUG, setLevel, WARN, ERROR, INFO
+    setLevel(INFO)
 
     app = QtWidgets.QApplication([])
 
