@@ -8,7 +8,7 @@ from engines.python_engine import PythonEngine
 class MayaEngine(PythonEngine):
 
     name = 'Maya'
-    implements = ['explore','open']
+    implements = ['explore', 'open']
 
     def save_next(self, sid, options={}):
         """
@@ -32,9 +32,9 @@ class MayaEngine(PythonEngine):
 
 if __name__ == '__main__':
 
-    sid = 'FTOT/A/CHR/COCO/MOD/V002/WIP/ma'
-    print(Sid(sid).path)
+    test_sid = 'FTOT/A/CHR/COCO/MOD/V002/WIP/ma'
+    print(Sid(test_sid).path)
     e = MayaEngine()
     print(e)
     # e.open(sid)
-    e.open(sid)
+    e.open(test_sid)

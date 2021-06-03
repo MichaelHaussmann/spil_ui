@@ -9,13 +9,13 @@ from engines.python_engine import PythonEngine
 class NukeEngine(PythonEngine):
 
     name = 'Nuke'
-    implements = ['explore','open']
+    implements = ['explore', 'open']
 
     def open(self, sid):
         """
         Open file
         """
-        #TODO : Set env variable / set Workspace
+        # TODO : Set env variable / set Workspace
         try:
             path = Path(Sid(sid).path)
         except SpilException as e:

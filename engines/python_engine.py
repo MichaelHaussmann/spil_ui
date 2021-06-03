@@ -2,7 +2,7 @@ from spil import Sid
 from engines.base_engine import BaseEngine
 
 
-class PythonEngine(BaseEngine):  #FIXME: use rez to launch softwares
+class PythonEngine(BaseEngine):  # FIXME: use rez to launch softwares
 
     name = 'Python'
     implements = ['explore']
