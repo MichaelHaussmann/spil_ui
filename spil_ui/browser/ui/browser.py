@@ -39,12 +39,13 @@ from data.files import Files
 import engines
 from spil_ui.util.dialogs import Dialogs
 
-log = logging.getLogger('browser')
+from logzero import setup_logger
+log = setup_logger(name="spil_ui")
 
 UserRole = QtCore.Qt.UserRole
 ui_path = os.path.join(os.path.dirname(__file__), 'qt/browser.ui')
 
-searchers = ['*', ',', '>', '<']
+searchers = ['*', ',', '>', '<', '**']
 entity_version_slit = 'version'  # key that separates entity blocs/lists representation and the table bloc representation
 table_bloc_columns = ['Sid', 'Comment', 'Size', 'Time']
 table_bloc_callbacks = ['getComment', 'getSize', 'getTime']  # TEMPORARY - will be proper data go_through
@@ -52,6 +53,8 @@ search_reset_keys = ['project', 'type', 'cat', 'seq']  # these fields trigger a 
 
 sid_colors = {'published': QtGui.QColor(207, 229, 85)}
 
+#Right clic : Open unloaded, Copy Sid, Add to history, Open OK, edit comment, edit json
+#TODO: perfect Sid paste, including abc (and add to history ?), tab order, arrow keys
 class Browser(QtWidgets.QMainWindow):
 
     cb = QtWidgets.QApplication.clipboard()  # TODO: use
@@ -97,7 +100,12 @@ class Browser(QtWidgets.QMainWindow):
 
     def build_entities(self):
 
-        for key in self.search.data.keys():  # traverses search_sid by key: project, type, ...
+        if '/**' in self.search.string:
+            search = Sid(self.search.string.split('/**')[0])
+        else:
+            search = self.search.copy()
+
+        for key in search.data.keys():  # traverses search_sid by key: project, type, ...
 
             if key == 'version':
                 self.build_versions()
@@ -105,7 +113,7 @@ class Browser(QtWidgets.QMainWindow):
 
             if self.sid_widgets.get(key):  # if the widget already exists, we get it...
                 list_widget = self.sid_widgets.get(key)
-                if self.search.get(key) in searchers or not self.current_sid.get(key):  # need to clear entities below
+                if search.get(key) in searchers or not self.current_sid.get(key):  # need to clear entities below
                     list_widget.clear()
                     self.clear_entities()
             else:
@@ -114,13 +122,13 @@ class Browser(QtWidgets.QMainWindow):
             if list_widget.count():
                 continue
 
-            found = FS().get(self.search.get_as(key).get_with(key=key, value='*'), as_sid=False)
+            found = FS().get(search.get_as(key).get_with(key=key, value='*'), as_sid=False)
 
             for i in sorted(list(found)):
                 i = Sid(i)
                 item = addListWidgetItem(list_widget, i.get_as(key), i.get(key))
 
-                if i.get_as(key) == self.search.get_as(key):
+                if i.get_as(key) == search.get_as(key):
                     item.setSelected(True)
                     list_widget.setCurrentItem(item)
                     self.current_sid = i.get_as(key)
@@ -132,8 +140,13 @@ class Browser(QtWidgets.QMainWindow):
 
             list_widget.setFixedWidth(list_widget.sizeHintForColumn(0) + 2 * list_widget.frameWidth() + 20)
 
-            if self.search.get(key) in searchers:
+            if search.get(key) in searchers:
                 break
+
+        log.debug('Done build_entities. - ' + self.search.string)
+
+        if '/**' in self.search.string:
+            self.build_versions()
 
         """  #TODO: tab order
         for i in range(len(self.sid_widgets))-1:
@@ -151,6 +164,8 @@ class Browser(QtWidgets.QMainWindow):
 
         parent.verticalHeader().setVisible(False)
         parent.verticalHeader().setDefaultSectionSize(30)
+
+        log.debug('build_versions start: ' + self.search.string)
 
         if self.search:
 
@@ -183,6 +198,12 @@ class Browser(QtWidgets.QMainWindow):
             search = search.get_with(state=','.join(state_filter) or '*',
                                      ext=','.join(ext_filter) or '*')
             search = search.string
+
+        else:
+
+            search = self.search.string
+
+        if True:
 
             log.debug('now searching')
             log.debug(search)
@@ -256,22 +277,38 @@ class Browser(QtWidgets.QMainWindow):
             self.launch_search(Sid(selected))
 
     def select_search(self, item=None):
-        sid = item.data(UserRole)
-        #self.launch_search(sid)
+        """
+        Called by click on an entity widget (project, type, asset/shot, etc.) or the version table.
+        Receives the clicked sid.
 
-        """ Experimental "sticky search" : we just update the last key of the item. The problem is if the user wants to refresh the rest... """
+        Launches the new search, either "sticky" or "reset".
+        Sticky: the self.search is kept, only updated with the clicked sids keytype (last key)
+        Reset: the clicked sid replaces the self.search all over.
+
+        If the click comes from the version table, it is "reset".
+        Sticky search is possible only if the self.search is typed.
+        If the clicked sids keytype is of certain type, as defined in "search_reset_keys" we use "reset".
+        """
+        sid = item.data(UserRole)
+        log.debug('Select search: item sid="{}", self.search="{}"'.format(sid, self.search))
+
         if self.sender() == self.versions_tw:
             self.launch_search(sid)
         else:
             sid = Sid(sid)
             key = sid.keytype
-            if key not in search_reset_keys:
+            if self.search.type and key not in search_reset_keys:
                 search = self.search.get_with(key=key, value=sid.get(key))
                 self.launch_search(search)
             else:
                 self.launch_search(sid)
 
     def input_search(self):
+        """
+        Called when the input sid lineEdit "input_sid_le" is triggered.
+        Launches a new search.
+        """
+        log.debug('input_search {}'.format(self.input_sid_le.text()))
         self.launch_search(self.input_sid_le.text())
 
     def edit_search(self, search_sid):
@@ -289,8 +326,19 @@ class Browser(QtWidgets.QMainWindow):
 
     def launch_search(self, search_sid):
         """
-        Receives an updated search, to start a new search cycle.
-        Called from history or the search sid input field.
+        Main entry point for a new search.
+        Called either by:
+        - __init__ (browser start),
+        - set_sid_from_history (sid history menu),
+        - input_search (search sid line edit), or
+        - select_search (click select a sid)
+
+        Launches a new search cycle.
+        - instanciates the Sid
+        - calls edit_search: add search criterias ('*') if needed.
+        - sets self.search
+        - sets the input field
+        - calls boot_entities: triggers UI update with the new columns, table, buttons
         """
         log.debug('New search cycle: ' + str(search_sid))
         search_sid = Sid(search_sid)
@@ -413,7 +461,7 @@ class Browser(QtWidgets.QMainWindow):
 if __name__ == '__main__':
 
     from spil.util.log import DEBUG, setLevel, WARN, ERROR, INFO
-    setLevel(INFO)
+    setLevel(ERROR)
 
     app = QtWidgets.QApplication([])
 
