@@ -284,6 +284,16 @@
              </property>
             </widget>
            </item>
+           <item>
+            <widget class="QCheckBox" name="cache_cb">
+             <property name="text">
+              <string>Cache</string>
+             </property>
+             <property name="checked">
+              <bool>false</bool>
+             </property>
+            </widget>
+           </item>
           </layout>
          </widget>
         </item>
