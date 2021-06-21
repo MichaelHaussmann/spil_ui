@@ -21,6 +21,18 @@ TODO:
 - actions refresh browser when done
 - code options (maya/movie/OK/WIP, etc) in a dynamic way - currently all hard coded.  
 
+
+    The Search circle is basically:
+    search -> results -> selection / input -> current -> search
+    
+    In detail the circle is:
+    - start with a search sid
+    - potentially add search terms to search sid, typically : /* at the end.
+    - boot / fill entities and versions with search sid and search results
+    - select with values from search sid by default -> we have a current sid 
+    - wait for user input -> we update the current sid
+    - on signal, we update the search sid, current -> search, and loop again.
+    
 """
 import os
 import logging
@@ -28,6 +40,9 @@ from collections import OrderedDict
 
 # Uses Qt.py
 from Qt import QtCore, QtCompat, QtWidgets, QtGui
+from Qt.QtWidgets import QMenu, QAction
+#from Qt.QtWidgets import QTableWidget, QMenu, QApplication, QAction
+from Qt.QtCore import Qt
 
 from spil.util.utils import uniqfy  # FIXME: deep import
 
@@ -39,12 +54,13 @@ from data.files import Files
 import engines
 from spil_ui.util.dialogs import Dialogs
 
-log = logging.getLogger('browser')
+from logzero import setup_logger
+log = setup_logger(name="spil_ui")
 
 UserRole = QtCore.Qt.UserRole
 ui_path = os.path.join(os.path.dirname(__file__), 'qt/browser.ui')
 
-searchers = ['*', ',', '>', '<']
+searchers = ['*', ',', '>', '<', '**']
 entity_version_slit = 'version'  # key that separates entity blocs/lists representation and the table bloc representation
 table_bloc_columns = ['Sid', 'Comment', 'Size', 'Time']
 table_bloc_callbacks = ['getComment', 'getSize', 'getTime']  # TEMPORARY - will be proper data go_through
@@ -52,6 +68,8 @@ search_reset_keys = ['project', 'type', 'cat', 'seq']  # these fields trigger a 
 
 sid_colors = {'published': QtGui.QColor(207, 229, 85)}
 
+#Right clic : Open unloaded, Copy Sid, Add to history, Open OK, edit comment, edit json
+#TODO: perfect Sid paste, including abc (and add to history ?), tab order, arrow keys
 class Browser(QtWidgets.QMainWindow):
 
     cb = QtWidgets.QApplication.clipboard()  # TODO: use
@@ -83,6 +101,10 @@ class Browser(QtWidgets.QMainWindow):
             search = Sid('*')
         log.debug(search)
 
+        self.ok_cb.setVisible(False)  #FIXME: temp
+        self.wip_cb.setVisible(False)
+        self.last_cb.setVisible(False)
+
         self.current_sid = Sid()
         self.connect_events()
         self.launch_search(search)
@@ -97,15 +119,20 @@ class Browser(QtWidgets.QMainWindow):
 
     def build_entities(self):
 
-        for key in self.search.data.keys():  # traverses search_sid by key: project, type, ...
+        if '/**' in self.search.string:
+            search = Sid(self.search.string.split('/**')[0])
+        else:
+            search = self.search.copy()
 
-            if key == 'version':
+        for key in search.data.keys():  # traverses search_sid by key: project, type, ...
+
+            if False:  # key == 'version':
                 self.build_versions()
                 return
 
             if self.sid_widgets.get(key):  # if the widget already exists, we get it...
                 list_widget = self.sid_widgets.get(key)
-                if self.search.get(key) in searchers or not self.current_sid.get(key):  # need to clear entities below
+                if search.get(key) in searchers or not self.current_sid.get(key):  # need to clear entities below
                     list_widget.clear()
                     self.clear_entities()
             else:
@@ -114,13 +141,13 @@ class Browser(QtWidgets.QMainWindow):
             if list_widget.count():
                 continue
 
-            found = FS().get(self.search.get_as(key).get_with(key=key, value='*'), as_sid=False)
+            found = FS().get(search.get_as(key).get_with(key=key, value='*'), as_sid=False)
 
             for i in sorted(list(found)):
                 i = Sid(i)
                 item = addListWidgetItem(list_widget, i.get_as(key), i.get(key))
 
-                if i.get_as(key) == self.search.get_as(key):
+                if i.get_as(key) == search.get_as(key):
                     item.setSelected(True)
                     list_widget.setCurrentItem(item)
                     self.current_sid = i.get_as(key)
@@ -130,10 +157,22 @@ class Browser(QtWidgets.QMainWindow):
             list_widget.itemClicked.connect(self.select_search)
             # list_widget.itemSelectionChanged.connect(self.select_search)
 
+            #list_widget.setContextMenuPolicy(Qt.CustomContextMenu)
+            #list_widget.customContextMenuRequested.connect(self.openMenu)
+
             list_widget.setFixedWidth(list_widget.sizeHintForColumn(0) + 2 * list_widget.frameWidth() + 20)
 
-            if self.search.get(key) in searchers:
+            if search.get(key) in searchers:
                 break
+
+            if key == 'task':
+                self.build_versions()
+                return
+
+        log.debug('Done build_entities. - ' + self.search.string)
+
+        if '/**' in self.search.string:
+            self.build_versions()
 
         """  #TODO: tab order
         for i in range(len(self.sid_widgets))-1:
@@ -152,11 +191,23 @@ class Browser(QtWidgets.QMainWindow):
         parent.verticalHeader().setVisible(False)
         parent.verticalHeader().setDefaultSectionSize(30)
 
+        log.debug('build_versions start: ' + self.search.string)
+
+        # ext
+        ext_filter = []
+        if self.maya_cb.isChecked():
+            ext_filter.append('maya')
+        if self.movie_cb.isChecked():
+            ext_filter.append('movie')
+        if self.cache_cb.isChecked():
+            ext_filter.append('cache')
+
         if self.search:
 
             # we keep the global self.search but change fields for version, state, ext.
-            search = self.search
+            search = self.search.get_as('task').string + '/**'
 
+            """
             if all(s not in str(search) for s in searchers):
                 search = search.get_with(version='>' if self.last_cb.isChecked() else '*')
 
@@ -166,29 +217,35 @@ class Browser(QtWidgets.QMainWindow):
                 state_filter.append('WIP')
             if self.ok_cb.isChecked():
                 state_filter.append('OK')
-
-            # ext
-            ext_filter = []
-            if self.maya_cb.isChecked():
-                ext_filter.append('maya')
-            if self.movie_cb.isChecked():
-                ext_filter.append('movie')
-            # if self.cache_cb.isChecked():
-            #    ext_filter.append('cache')
-
+            
             if self.search.get('version') in ['>', '*', None]:
                 search = search.get_with(version='>' if self.last_cb.isChecked() else '*')
 
             # if not self.search.get('state'):
             search = search.get_with(state=','.join(state_filter) or '*',
                                      ext=','.join(ext_filter) or '*')
-            search = search.string
+            
+            """
+            # search = search.string
+
+        else:
+
+            search = self.search.string
+
+        if True:
+
+            if '/**' in search and ext_filter:
+                if search.count('?'):  # sid contains URI ending. We put it aside, and later append it back
+                    search, uri = search.split('?', 1)
+                else:
+                    uri = ''
+                search = search.split('/**')[0] + '/**/' + ','.join(ext_filter) + ('?' + uri if uri else '')
 
             log.debug('now searching')
             log.debug(search)
             self.input_sid_le.setText(search)
 
-            children = sorted(list(FS().get(search, as_sid=False)))
+            children = sorted(list(FS().get(search + '?state=WIP', as_sid=False)))  #FIXME: temporary hide OK
 
             parent.setRowCount(len(children))
             for row, sid in enumerate(children):
@@ -211,10 +268,80 @@ class Browser(QtWidgets.QMainWindow):
 
             parent.setStyleSheet(table_css)
             parent.resizeColumnsToContents()
-            if parent.columnWidth(0) < 120:  # TODO Make dynamic
+            if parent.columnWidth(0) < 120:
                 parent.setColumnWidth(0, 260)
                 parent.setColumnWidth(1, 140)
                 parent.setColumnWidth(2, 100)
+
+        self.versions_tw.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.versions_tw.customContextMenuRequested.connect(self.openMenu)
+
+    """
+    def contextMenuEvent(self, pos):
+        if self.versions_tw.selectionModel().selection().indexes():
+            for i in self.versions_tw.selectionModel().selection().indexes():
+                row, column = i.row(), i.column()
+            print(pos)
+            menu = QMenu()
+            openAction = menu.addAction("Open")
+            deleAction = menu.addAction("Delete")
+            renaAction = menu.addAction("Rename")
+            action = menu.exec_(self.versions_tw.mapToGlobal(pos))
+            if action == openAction:
+                self.openAction(row, column)
+    """
+
+    def openMenu(self, position):
+
+        menu = QMenu()
+        actions = {}
+
+        for action in self.engine.get_actions(self.current_sid):
+            item = QAction()
+            item.setData(action.get("name"))
+            item.setText(str(action.get("label")))
+            actions[action.get("name")] = menu.addAction(item)
+
+        action_do = menu.exec_(self.versions_tw.mapToGlobal(position))
+        """
+        menu.addAction("quit")
+        row = self.versions_tw.rowAt(position.y())
+        col = self.versions_tw.columnAt(position.x())
+        cell = self.versions_tw.item(row, 0)
+        # get the text inside selected cell (if any)
+        cellText = cell.text()
+        print(action_do)
+        if action == quitAction:
+            print('YO')
+            print(cellText)
+        """
+        if action_do:
+            self.engine.run_action(action_do.data(), self.current_sid)
+
+    def contextMenuEvent(self, event):
+        return
+        self.menu = QMenu(self)
+        renameAction = QAction('Rename', self)
+        renameAction.triggered.connect(lambda: self.renameSlot(event))
+        self.menu.addAction(renameAction)
+        # add other required actions
+        self.menu.popup(QtGui.QCursor.pos())
+    """
+    def renameSlot(self, event):
+        "renaming slot called"
+        # get the selected row and column
+        row = self.versions_tw.rowAt(event.pos().y())
+        col = self.versions_tw.columnAt(event.pos().x())
+        # get the selected cell
+        cell = self.versions_tw.item(row, col)
+        # get the text inside selected cell (if any)
+        cellText = cell.text()
+        # get the widget inside selected cell (if any)
+        widget = self.versions_tw.cellWidget(row, col)
+        print(cellText)
+        print(widget)
+
+    """
 
     def clear_entities(self):
         """
@@ -236,19 +363,6 @@ class Browser(QtWidgets.QMainWindow):
     def clear_versions(self):
         self.versions_tw.clear()
 
-    # Update / SID IO
-    """
-    The circle is basically:
-    search -> results -> selection / input -> current -> search
-    
-    In detail the circle is:
-    - start with a search sid
-    - potentially add search terms to search sid, typically : /* at the end.
-    - boot / fill entities and versions with search sid and search results
-    - select with values from search sid by default -> we have a current sid 
-    - wait for user input -> we update the current sid
-    - on signal, we update the search sid, current -> search, and loop again.
-    """
     def set_sid_from_history(self):
         selected = self.sid_history_cb.itemText(self.sid_history_cb.currentIndex())
         if selected:
@@ -256,22 +370,38 @@ class Browser(QtWidgets.QMainWindow):
             self.launch_search(Sid(selected))
 
     def select_search(self, item=None):
-        sid = item.data(UserRole)
-        #self.launch_search(sid)
+        """
+        Called by click on an entity widget (project, type, asset/shot, etc.) or the version table.
+        Receives the clicked sid.
 
-        """ Experimental "sticky search" : we just update the last key of the item. The problem is if the user wants to refresh the rest... """
+        Launches the new search, either "sticky" or "reset".
+        Sticky: the self.search is kept, only updated with the clicked sids keytype (last key)
+        Reset: the clicked sid replaces the self.search all over.
+
+        If the click comes from the version table, it is "reset".
+        Sticky search is possible only if the self.search is typed.
+        If the clicked sids keytype is of certain type, as defined in "search_reset_keys" we use "reset".
+        """
+        sid = item.data(UserRole)
+        log.debug('Select search: item sid="{}", self.search="{}"'.format(sid, self.search))
+
         if self.sender() == self.versions_tw:
             self.launch_search(sid)
         else:
             sid = Sid(sid)
             key = sid.keytype
-            if key not in search_reset_keys:
+            if self.search.type and key not in search_reset_keys:
                 search = self.search.get_with(key=key, value=sid.get(key))
                 self.launch_search(search)
             else:
                 self.launch_search(sid)
 
     def input_search(self):
+        """
+        Called when the input sid lineEdit "input_sid_le" is triggered.
+        Launches a new search.
+        """
+        log.debug('input_search {}'.format(self.input_sid_le.text()))
         self.launch_search(self.input_sid_le.text())
 
     def edit_search(self, search_sid):
@@ -289,8 +419,19 @@ class Browser(QtWidgets.QMainWindow):
 
     def launch_search(self, search_sid):
         """
-        Receives an updated search, to start a new search cycle.
-        Called from history or the search sid input field.
+        Main entry point for a new search.
+        Called either by:
+        - __init__ (browser start),
+        - set_sid_from_history (sid history menu),
+        - input_search (search sid line edit), or
+        - select_search (click select a sid)
+
+        Launches a new search cycle.
+        - instanciates the Sid
+        - calls edit_search: add search criterias ('*') if needed.
+        - sets self.search
+        - sets the input field
+        - calls boot_entities: triggers UI update with the new columns, table, buttons
         """
         log.debug('New search cycle: ' + str(search_sid))
         search_sid = Sid(search_sid)
@@ -388,12 +529,12 @@ class Browser(QtWidgets.QMainWindow):
 
     def connect_events(self):
         self.input_sid_le.returnPressed.connect(self.input_search)
-        self.versions_tw.doubleClicked.connect(self.run_actions)
+        # self.versions_tw.doubleClicked.connect(self.run_actions)
         self.sid_history_cb.currentIndexChanged.connect(self.set_sid_from_history)
         self.versions_tw.itemClicked.connect(self.select_search)
         self.maya_cb.clicked.connect(self.build_versions)
         self.movie_cb.clicked.connect(self.build_versions)
-        # self.cache_cb.clicked.connect(self.build_versions)
+        self.cache_cb.clicked.connect(self.build_versions)
         self.wip_cb.clicked.connect(self.build_versions)
         self.ok_cb.clicked.connect(self.build_versions)
         self.last_cb.clicked.connect(self.build_versions)
@@ -413,7 +554,7 @@ class Browser(QtWidgets.QMainWindow):
 if __name__ == '__main__':
 
     from spil.util.log import DEBUG, setLevel, WARN, ERROR, INFO
-    setLevel(INFO)
+    setLevel(ERROR)
 
     app = QtWidgets.QApplication([])
 
