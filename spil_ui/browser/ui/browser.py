@@ -35,7 +35,7 @@ TODO:
     
 """
 import os
-import logging
+from pikko_core import logging
 from collections import OrderedDict
 
 # Uses Qt.py
@@ -54,8 +54,11 @@ from data.files import Files
 import engines
 from spil_ui.util.dialogs import Dialogs
 
-from logzero import setup_logger
-log = setup_logger(name="spil_ui")
+import spil.util.log as sl
+sl.setLevel(sl.ERROR)
+
+log = logging.get_logger(name="spil_ui")
+log.setLevel(logging.INFO)
 
 UserRole = QtCore.Qt.UserRole
 ui_path = os.path.join(os.path.dirname(__file__), 'qt/browser.ui')
@@ -551,15 +554,30 @@ class Browser(QtWidgets.QMainWindow):
             pass
 
 
+def open_browser(sid=None, do_new=False):
+
+    global browser_window
+    try:
+        if not browser_window:
+            browser_window = None
+    except:
+        browser_window = None
+
+    if do_new or not browser_window:
+        browser_window = Browser(search=sid)
+        browser_window.show()
+    else:
+        browser_window.activateWindow()
+        browser_window.show()
+
+
 if __name__ == '__main__':
 
     from spil.util.log import DEBUG, setLevel, WARN, ERROR, INFO
     setLevel(ERROR)
 
-    app = QtWidgets.QApplication([])
-
     sid = 'FTOT/S/SQ0001/SH0020/LAY/V002/WIP/ma'
-    win = Browser(search=sid)
-    win.show()
 
+    app = QtWidgets.QApplication.instance() or QtWidgets.QApplication([])
+    open_browser(sid)
     app.exec_()
