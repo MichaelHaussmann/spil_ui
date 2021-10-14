@@ -35,22 +35,20 @@ TODO:
     
 """
 import os
-from pikko_core import logging
+from spil import logging
 from collections import OrderedDict
 
 # Uses Qt.py
 from Qt import QtCore, QtCompat, QtWidgets, QtGui
-from Qt.QtWidgets import QMenu, QAction
-#from Qt.QtWidgets import QTableWidget, QMenu, QApplication, QAction
-from Qt.QtCore import Qt
+# from Qt.QtWidgets import QMenu, QAction
+# from Qt.QtCore import Qt
 
 from spil.util.utils import uniqfy  # FIXME: deep import
 
 from spil_ui.browser.ui.qt_helper import addListWidgetItem, clear_layout, addTableWidgetItem, table_css
 
-# FS and Files must be abstracted / to a data delegate
-from spil import FS, Sid, SpilException, conf
-from data.files import Files
+# FS and Files are abstracted / to a data delegate
+from spil import Data as FS, Sid, SpilException, conf
 import engines
 from spil_ui.util.dialogs import Dialogs
 
@@ -66,8 +64,22 @@ ui_path = os.path.join(os.path.dirname(__file__), 'qt/browser.ui')
 searchers = ['*', ',', '>', '<', '**']
 entity_version_slit = 'version'  # key that separates entity blocs/lists representation and the table bloc representation
 table_bloc_columns = ['Sid', 'Comment', 'Size', 'Time']
-table_bloc_callbacks = ['getComment', 'getSize', 'getTime']  # TEMPORARY - will be proper data go_through
+table_bloc_attributes = ['comment', 'size', 'time']
 search_reset_keys = ['project', 'type', 'cat', 'seq']  # these fields trigger a reset of the search sid - else we are "sticky" and only change the given key.
+basetype_to_cut = {'render': 'shot', 'default': 'task'}  # cut individual columns from the version window
+extension_filters = ['maya', 'movie', 'cache', 'img']
+
+""" WIP for dynamic options
+version_filters = {
+                    'shot': {'state': ['WIP', 'OK']},
+                    'render': {'state': ['WIP', 'OK']},
+                  }
+
+basetype_to_extensions = {
+                        'shot': ['maya', 'movie', 'cache'],
+                        'render': ['img'],
+                         }
+"""
 
 sid_colors = {'published': QtGui.QColor(207, 229, 85)}
 
@@ -82,15 +94,15 @@ class Browser(QtWidgets.QMainWindow):
         QtCompat.loadUi(ui_path, self)
 
         # init sources
-        self.data = Files()  # TODO: data framework
         self.uio = Dialogs()
         self.engine = engines.get()
         self.sid_history = conf.sid_usage_history
         log.debug('Loaded engine {}'.format(self.engine))
 
         self.buttons = []
+        self.boxes = []
+        self.search = None
         self.previous_sid = Sid()
-        # self.previous_search = Sid()
 
         # Init of the SearchSid
         # Either passed argument, or current from engine, or last from history, or empty Sid
@@ -106,7 +118,8 @@ class Browser(QtWidgets.QMainWindow):
 
         self.ok_cb.setVisible(False)  #FIXME: temp
         self.wip_cb.setVisible(False)
-        self.last_cb.setVisible(False)
+        self.state_gb.setVisible(False)
+        self.init_extension_filters()
 
         self.current_sid = Sid()
         self.connect_events()
@@ -128,10 +141,6 @@ class Browser(QtWidgets.QMainWindow):
             search = self.search.copy()
 
         for key in search.data.keys():  # traverses search_sid by key: project, type, ...
-
-            if False:  # key == 'version':
-                self.build_versions()
-                return
 
             if self.sid_widgets.get(key):  # if the widget already exists, we get it...
                 list_widget = self.sid_widgets.get(key)
@@ -168,7 +177,7 @@ class Browser(QtWidgets.QMainWindow):
             if search.get(key) in searchers:
                 break
 
-            if key == 'task':
+            if key == basetype_to_cut.get(search.basetype, 'task'):  # 'shot':  # 'task':
                 self.build_versions()
                 return
 
@@ -196,46 +205,33 @@ class Browser(QtWidgets.QMainWindow):
 
         log.debug('build_versions start: ' + self.search.string)
 
-        # ext
-        ext_filter = []
-        if self.maya_cb.isChecked():
-            ext_filter.append('maya')
-        if self.movie_cb.isChecked():
-            ext_filter.append('movie')
-        if self.cache_cb.isChecked():
-            ext_filter.append('cache')
+        log.debug('search on start {}'.format(self.search))
 
-        if self.search:
+        if self.search:  # if the current search is defined, typed. #FIXME: not clear. #SMELL
 
-            # we keep the global self.search but change fields for version, state, ext.
-            search = self.search.get_as('task').string + '/**'
-
-            """
-            if all(s not in str(search) for s in searchers):
-                search = search.get_with(version='>' if self.last_cb.isChecked() else '*')
-
-            # state  # FIXME: this is all hard coded, should not
-            state_filter = []
-            if self.wip_cb.isChecked():
-                state_filter.append('WIP')
-            if self.ok_cb.isChecked():
-                state_filter.append('OK')
-            
-            if self.search.get('version') in ['>', '*', None]:
-                search = search.get_with(version='>' if self.last_cb.isChecked() else '*')
-
-            # if not self.search.get('state'):
-            search = search.get_with(state=','.join(state_filter) or '*',
-                                     ext=','.join(ext_filter) or '*')
-            
-            """
-            # search = search.string
+            if '/**' in self.search.string:
+                search = self.search.string
+            else:
+                # we keep the global self.search but change fields for version, state, ext.
+                key = basetype_to_cut.get(self.search.basetype, 'task')
+                if self.search.get_as(key):
+                    search = self.search.get_as(key).string + '/**'
+                else:
+                    search = None
 
         else:
 
             search = self.search.string
 
-        if True:
+        # print(f'intermediate: search)
+
+        if search:
+
+            ext_filter = []
+            for box in self.boxes:
+                box_text = box.text()
+                if box.isChecked():
+                    ext_filter.append(box_text)
 
             if '/**' in search and ext_filter:
                 if search.count('?'):  # sid contains URI ending. We put it aside, and later append it back
@@ -244,11 +240,16 @@ class Browser(QtWidgets.QMainWindow):
                     uri = ''
                 search = search.split('/**')[0] + '/**/' + ','.join(ext_filter) + ('?' + uri if uri else '')
 
-            log.debug('now searching')
-            log.debug(search)
             self.input_sid_le.setText(search)
 
-            children = sorted(list(FS().get(search + '?state=WIP', as_sid=False)))  #FIXME: temporary hide OK
+            search = search + ('?version=>' if self.last_cb.isChecked() else '')
+            search = search + '?state=WIP'  # FIXME: temporary hide OK
+
+            log.debug('Final search: {}'.format(search))
+
+            # dirty technique to force single frame search for speed.
+            # children = sorted(list(FS().get(search + '?state=WIP' + ('&frame=0101' if self.search.basetype == 'render' else ''), as_sid=False)))
+            children = sorted(list(FS().get(search, as_sid=False)))
 
             parent.setRowCount(len(children))
             for row, sid in enumerate(children):
@@ -256,9 +257,8 @@ class Browser(QtWidgets.QMainWindow):
                 sid_color = sid_colors.get('published') if sid.get_with(state='OK').exists() else None
                 item = addTableWidgetItem(parent, sid, sid, row=row, column=0, fgcolor=sid_color)
 
-                for i, func in enumerate(table_bloc_callbacks):
-                    func = getattr(self.data, func)
-                    addTableWidgetItem(parent, sid, func(sid), row=row, column=i+1)
+                for i, attr in enumerate(table_bloc_attributes):
+                    addTableWidgetItem(parent, sid, sid.get_attr(attr) or '', row=row, column=i+1)
 
                 # log.debug('{} // {} ?'.format(sid, self.search))
                 if sid == self.search:  # FIXME: must also work during update
@@ -275,76 +275,6 @@ class Browser(QtWidgets.QMainWindow):
                 parent.setColumnWidth(0, 260)
                 parent.setColumnWidth(1, 140)
                 parent.setColumnWidth(2, 100)
-
-        self.versions_tw.setContextMenuPolicy(Qt.CustomContextMenu)
-        self.versions_tw.customContextMenuRequested.connect(self.openMenu)
-
-    """
-    def contextMenuEvent(self, pos):
-        if self.versions_tw.selectionModel().selection().indexes():
-            for i in self.versions_tw.selectionModel().selection().indexes():
-                row, column = i.row(), i.column()
-            print(pos)
-            menu = QMenu()
-            openAction = menu.addAction("Open")
-            deleAction = menu.addAction("Delete")
-            renaAction = menu.addAction("Rename")
-            action = menu.exec_(self.versions_tw.mapToGlobal(pos))
-            if action == openAction:
-                self.openAction(row, column)
-    """
-
-    def openMenu(self, position):
-
-        menu = QMenu()
-        actions = {}
-
-        for action in self.engine.get_actions(self.current_sid):
-            item = QAction()
-            item.setData(action.get("name"))
-            item.setText(str(action.get("label")))
-            actions[action.get("name")] = menu.addAction(item)
-
-        action_do = menu.exec_(self.versions_tw.mapToGlobal(position))
-        """
-        menu.addAction("quit")
-        row = self.versions_tw.rowAt(position.y())
-        col = self.versions_tw.columnAt(position.x())
-        cell = self.versions_tw.item(row, 0)
-        # get the text inside selected cell (if any)
-        cellText = cell.text()
-        print(action_do)
-        if action == quitAction:
-            print('YO')
-            print(cellText)
-        """
-        if action_do:
-            self.engine.run_action(action_do.data(), self.current_sid)
-
-    def contextMenuEvent(self, event):
-        return
-        self.menu = QMenu(self)
-        renameAction = QAction('Rename', self)
-        renameAction.triggered.connect(lambda: self.renameSlot(event))
-        self.menu.addAction(renameAction)
-        # add other required actions
-        self.menu.popup(QtGui.QCursor.pos())
-    """
-    def renameSlot(self, event):
-        "renaming slot called"
-        # get the selected row and column
-        row = self.versions_tw.rowAt(event.pos().y())
-        col = self.versions_tw.columnAt(event.pos().x())
-        # get the selected cell
-        cell = self.versions_tw.item(row, col)
-        # get the text inside selected cell (if any)
-        cellText = cell.text()
-        # get the widget inside selected cell (if any)
-        widget = self.versions_tw.cellWidget(row, col)
-        print(cellText)
-        print(widget)
-
-    """
 
     def clear_entities(self):
         """
@@ -366,7 +296,7 @@ class Browser(QtWidgets.QMainWindow):
     def clear_versions(self):
         self.versions_tw.clear()
 
-    def set_sid_from_history(self):
+    def set_sid_from_history(self):  # TODO: history handler
         selected = self.sid_history_cb.itemText(self.sid_history_cb.currentIndex())
         if selected:
             log.debug('selected ' + selected)
@@ -407,7 +337,7 @@ class Browser(QtWidgets.QMainWindow):
         log.debug('input_search {}'.format(self.input_sid_le.text()))
         self.launch_search(self.input_sid_le.text())
 
-    def edit_search(self, search_sid):
+    def edit_search(self, search_sid):  # TODO: factorize and simplify xxx_search methods
         """
         If the search has no searchers ("*", ",", ...) it needs edit.
         """
@@ -439,6 +369,13 @@ class Browser(QtWidgets.QMainWindow):
         log.debug('New search cycle: ' + str(search_sid))
         search_sid = Sid(search_sid)
 
+        # if it is a file, we keep the current search as long as it matches
+        if search_sid.get('ext') and search_sid.match(self.search):
+            log.debug('We selected File Sid "{}" - Setting Current Sid but keeping search sid '.format(search_sid))
+            self.current_sid = search_sid
+            self.update_current_sid()
+            return
+
         # check if the search needs update
         search_sid = self.edit_search(search_sid)
         self.search = search_sid
@@ -451,6 +388,30 @@ class Browser(QtWidgets.QMainWindow):
         if self.current_sid != self.previous_sid:
             self.previous_sid = self.current_sid
             self.init_actions()
+
+    def init_extension_filters(self):
+        """
+        Creates check boxes for extensions, from given config.
+        """
+
+        filters = extension_filters
+
+        if not filters:
+            return
+
+        groupBox = QtWidgets.QGroupBox("Extensions", self)
+        vbox = QtWidgets.QVBoxLayout(self)
+
+        for ext in filters:
+            box = QtWidgets.QCheckBox(ext, self)
+            box.setObjectName('ext_' + ext)
+            box.clicked.connect(self.build_versions)
+            vbox.addWidget(box)
+            self.boxes.append(box)
+
+        vbox.addStretch(1)
+        groupBox.setLayout(vbox)
+        self.engine_la.addWidget(groupBox)
 
     # Actions
     def init_actions(self):
@@ -535,11 +496,6 @@ class Browser(QtWidgets.QMainWindow):
         # self.versions_tw.doubleClicked.connect(self.run_actions)
         self.sid_history_cb.currentIndexChanged.connect(self.set_sid_from_history)
         self.versions_tw.itemClicked.connect(self.select_search)
-        self.maya_cb.clicked.connect(self.build_versions)
-        self.movie_cb.clicked.connect(self.build_versions)
-        self.cache_cb.clicked.connect(self.build_versions)
-        self.wip_cb.clicked.connect(self.build_versions)
-        self.ok_cb.clicked.connect(self.build_versions)
         self.last_cb.clicked.connect(self.build_versions)
         # QtWidgets.QShortcut(QtCore.Qt.Key_Up, self.centralwidget, self.select_search)  # TODO: arrow keys in listwidgets
 
@@ -568,16 +524,28 @@ def open_browser(sid=None, do_new=False):
         browser_window.show()
     else:
         browser_window.activateWindow()
+        browser_window.raise_()
+        browser_window.setWindowState(browser_window.windowState() & ~QtCore.Qt.WindowMinimized | QtCore.Qt.WindowActive)
         browser_window.show()
+
+
+def app(sid=None):
+
+    app = QtWidgets.QApplication.instance() or QtWidgets.QApplication([])
+    open_browser(sid)
+    app.exec_()
 
 
 if __name__ == '__main__':
 
+    # import cProfile  # profiling
     from spil.util.log import DEBUG, setLevel, WARN, ERROR, INFO
     setLevel(ERROR)
 
-    sid = 'FTOT/S/SQ0001/SH0020/LAY/V002/WIP/ma'
+    sid = ''  # FTOT/S/SQ0001/SH0020/LAY/V002/WIP/ma'
 
     app = QtWidgets.QApplication.instance() or QtWidgets.QApplication([])
+    open_browser(sid)
+    # cProfile.run('open_browser("FTOT/S/SQ0001/SH0020/LAY/V002/WIP/ma", do_new=True)', sort=1)
     open_browser(sid)
     app.exec_()
