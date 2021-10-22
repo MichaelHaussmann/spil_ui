@@ -67,7 +67,7 @@ table_bloc_columns = ['Sid', 'Comment', 'Size', 'Time']
 table_bloc_attributes = ['comment', 'size', 'time']
 search_reset_keys = ['project', 'type', 'cat', 'seq']  # these fields trigger a reset of the search sid - else we are "sticky" and only change the given key.
 basetype_to_cut = {'render': 'shot', 'default': 'task'}  # cut individual columns from the version window
-extension_filters = ['maya', 'movie', 'cache', 'img']
+extension_filters = ['maya', 'movie', 'cache', 'nk', 'img']
 
 """ WIP for dynamic options
 version_filters = {
@@ -92,6 +92,7 @@ class Browser(QtWidgets.QMainWindow):
     def __init__(self, search=None):
         super(Browser, self).__init__()
         QtCompat.loadUi(ui_path, self)
+        self.setWindowTitle('{} - Browser'.format('Pikko @ Kombbo'))
 
         # init sources
         self.uio = Dialogs()
@@ -157,6 +158,8 @@ class Browser(QtWidgets.QMainWindow):
 
             for i in sorted(list(found)):
                 i = Sid(i)
+                if not i.get_as(key):  # erroneous Sid
+                    continue
                 item = addListWidgetItem(list_widget, i.get_as(key), i.get(key))
 
                 if i.get_as(key) == search.get_as(key):
@@ -243,7 +246,7 @@ class Browser(QtWidgets.QMainWindow):
             self.input_sid_le.setText(search)
 
             search = search + ('?version=>' if self.last_cb.isChecked() else '')
-            search = search + '?state=WIP'  # FIXME: temporary hide OK
+            search = search + '?state=~WIP'  # FIXME: temporary hide OK
 
             log.debug('Final search: {}'.format(search))
 
@@ -547,5 +550,5 @@ if __name__ == '__main__':
     app = QtWidgets.QApplication.instance() or QtWidgets.QApplication([])
     open_browser(sid)
     # cProfile.run('open_browser("FTOT/S/SQ0001/SH0020/LAY/V002/WIP/ma", do_new=True)', sort=1)
-    open_browser(sid)
+    # open_browser(sid)
     app.exec_()
