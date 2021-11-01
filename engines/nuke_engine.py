@@ -34,8 +34,8 @@ class NukeEngine(PythonEngine):
         """
         Get the sid of the current file
         """
-        # return nuke.root().knob('name').value()  ?
-        raise NotImplemented('TODO :)')
+        path = nuke.root().knob('name').value()
+        return Sid(path=path)
 
     def is_batch(self):
         return not nuke.GUI
