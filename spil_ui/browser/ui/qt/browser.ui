@@ -7,14 +7,14 @@
     <x>0</x>
     <y>0</y>
     <width>1044</width>
-    <height>474</height>
+    <height>452</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>Browser</string>
   </property>
   <widget class="QWidget" name="centralwidget">
-   <layout class="QVBoxLayout" name="verticalLayout_2">
+   <layout class="QVBoxLayout" name="central_layout">
     <item>
      <layout class="QHBoxLayout" name="header_lo" stretch="1,0,0,0,1">
       <item>
@@ -306,20 +306,6 @@
        </layout>
       </item>
      </layout>
-    </item>
-    <item>
-     <widget class="QGroupBox" name="actions_gb">
-      <property name="sizePolicy">
-       <sizepolicy hsizetype="MinimumExpanding" vsizetype="Preferred">
-        <horstretch>0</horstretch>
-        <verstretch>0</verstretch>
-       </sizepolicy>
-      </property>
-      <property name="title">
-       <string>Actions</string>
-      </property>
-      <layout class="QHBoxLayout" name="actions_hl"/>
-     </widget>
     </item>
    </layout>
   </widget>

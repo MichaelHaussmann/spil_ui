@@ -50,6 +50,7 @@ from spil_ui.browser.ui.qt_helper import addListWidgetItem, clear_layout, addTab
 # FS and Files are abstracted / to a data delegate
 from spil import Data as FS, Sid, SpilException, conf
 import engines
+from spil_ui.browser.ui.action_handler import get_action_handler
 from spil_ui.util.dialogs import Dialogs
 
 import spil.util.log as sl
@@ -97,6 +98,9 @@ class Browser(QtWidgets.QMainWindow):
         # init sources
         self.uio = Dialogs()
         self.engine = engines.get()
+        self.action_handler = get_action_handler()
+        self.action_handler.init(self, self.central_layout, callback=self.fill_history)
+        log.debug('Loaded action handler {}'.format(self.action_handler))
         self.sid_history = conf.sid_usage_history
         log.debug('Loaded engine {}'.format(self.engine))
 
@@ -158,7 +162,8 @@ class Browser(QtWidgets.QMainWindow):
 
             for i in sorted(list(found)):
                 i = Sid(i)
-                if not i.get_as(key):  # erroneous Sid
+                if not i.get_as(key):  # erroneous Sid  TODO: move this double check as option in the search
+                    # print('erronoues {}'.format(i))
                     continue
                 item = addListWidgetItem(list_widget, i.get_as(key), i.get(key))
 
@@ -390,7 +395,7 @@ class Browser(QtWidgets.QMainWindow):
         self.current_sid_lb.setText(self.current_sid.string)
         if self.current_sid != self.previous_sid:
             self.previous_sid = self.current_sid
-            self.init_actions()
+            self.action_handler.update(self.current_sid)
 
     def init_extension_filters(self):
         """
@@ -415,52 +420,6 @@ class Browser(QtWidgets.QMainWindow):
         vbox.addStretch(1)
         groupBox.setLayout(vbox)
         self.engine_la.addWidget(groupBox)
-
-    # Actions
-    def init_actions(self):
-
-        self.actions_gb.setTitle(self.engine.name.replace('_', ' ').capitalize())
-        for b in self.buttons:
-            b.setVisible(False)
-            b.deleteLater()
-        self.buttons = []
-
-        for action in self.engine.get_actions(self.current_sid):
-            button = QtWidgets.QPushButton(action.get("label"), self)
-            # button.setToolTip((getattr(self.engine, action.get("name")).__doc__ or '').strip().replace('\t', ''))
-            button.setObjectName(action.get("name"))
-            button.clicked.connect(self.run_actions)
-            self.actions_hl.addWidget(button)
-            self.buttons.append(button)
-
-    def run_actions(self):  # TODO: more advanced features with parameters or options
-
-        if not self.current_sid:
-            return
-
-        sid = self.current_sid
-
-        sender = self.sender().objectName()
-
-        log.debug('sender: ["{0}"]'.format(sender))
-
-        if sender == 'versions_tw':  # double click
-            sender = self.engine.implements[0] if self.engine.implements else 'explore'
-
-        if sender in self.engine.needs_confirm:
-            if not self.uio.warn('This function may alter the scene and is not undoable. Are you sure?', withCancel=True):
-                return
-
-        try:
-            self.engine.run_action(sender, sid)
-            self.fill_history(sid)  # done at the end because sid might have changed
-            self.launch_search(sid)
-
-        except RuntimeError as e:
-            self.uio.error('Could not call "{0}" with "{1}".\nError : {2}'.format(sender, sid, e))
-
-        except SpilException as e:
-            self.uio.error('{0}'.format(e))
 
     # Utils
     def create_entity_widget(self, key):
@@ -496,7 +455,6 @@ class Browser(QtWidgets.QMainWindow):
 
     def connect_events(self):
         self.input_sid_le.returnPressed.connect(self.input_search)
-        # self.versions_tw.doubleClicked.connect(self.run_actions)
         self.sid_history_cb.currentIndexChanged.connect(self.set_sid_from_history)
         self.versions_tw.itemClicked.connect(self.select_search)
         self.last_cb.clicked.connect(self.build_versions)
