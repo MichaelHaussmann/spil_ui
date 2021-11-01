@@ -68,7 +68,7 @@ table_bloc_columns = ['Sid', 'Comment', 'Size', 'Time']
 table_bloc_attributes = ['comment', 'size', 'time']
 search_reset_keys = ['project', 'type', 'cat', 'seq']  # these fields trigger a reset of the search sid - else we are "sticky" and only change the given key.
 basetype_to_cut = {'render': 'shot', 'default': 'task'}  # cut individual columns from the version window
-extension_filters = ['maya', 'movie', 'cache', 'nk', 'img']
+extension_filters = ['maya', 'movie', 'cache', 'img']  # 'nk',
 
 """ WIP for dynamic options
 version_filters = {
