@@ -51,7 +51,6 @@ from spil_ui.browser.ui.qt_helper import addListWidgetItem, clear_layout, addTab
 from spil import Data as FS, Sid, SpilException, conf
 import engines
 from spil_ui.browser.ui.action_handler import get_action_handler
-from spil_ui.util.dialogs import Dialogs
 
 import spil.util.log as sl
 sl.setLevel(sl.ERROR)
@@ -96,7 +95,6 @@ class Browser(QtWidgets.QMainWindow):
         self.setWindowTitle('{} - Browser'.format('Pikko @ Kombbo'))
 
         # init sources
-        self.uio = Dialogs()
         self.engine = engines.get()
         self.action_handler = get_action_handler()
         self.action_handler.init(self, self.central_layout, callback=self.fill_history)

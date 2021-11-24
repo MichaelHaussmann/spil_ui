@@ -1,5 +1,6 @@
 # Uses Qt.py
 from Qt import QtWidgets
+from spil_ui.util.dialogs import Dialogs
 import engines
 
 from spil import logging, SpilException
@@ -25,6 +26,7 @@ class EngineActionHandler(AbstractActionHandler, QtWidgets.QWidget):  # inherits
 
     def __init__(self):
         super(EngineActionHandler, self).__init__()
+        self.uio = Dialogs()
         self.engine = engines.get()
         log.debug('Loaded engine {}'.format(self.engine))
         self.selection = None
