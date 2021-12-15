@@ -84,9 +84,23 @@ class Dialogs(QWidget):
                              QApplication.translate("Dialogs", self.striplog(message), None),
                              QMessageBox.Ok)
 
-    def confirm(self, message):
-        """ Opens an Yes/No question window and returns a Boolean """
-        ret = QMessageBox.question(self, conf.application_name,
+    def confirm(self, message, withCancel=False):
+        """
+        Opens an Yes/No question window and returns a Boolean.
+        If withCancel is True, a Cancel button is shown, which triggers a None return.
+        """
+        if withCancel:
+            ret = QMessageBox.warning(self, conf.application_name,
+                                      QApplication.translate("Dialogs", self.striplog(message), None),
+                                      QMessageBox.Yes | QMessageBox.No | QMessageBox.Cancel)
+            if ret == QMessageBox.Yes:
+                return True
+            if ret == QMessageBox.No:
+                return False
+            if ret == QMessageBox.Cancel:
+                return None
+        else:
+            ret = QMessageBox.question(self, conf.application_name,
                                    QApplication.translate("Dialogs", self.striplog(message), None),
                                    QMessageBox.Yes | QMessageBox.No)
         return ret == QMessageBox.Yes
@@ -196,6 +210,7 @@ if __name__ == '__main__':
 
     print(Dialogs().inform("Ok, good answer"))
     print(Dialogs().confirm("Do you like user interfaces?"))
+    print(Dialogs().confirm("Do you like user interfaces?", withCancel=True))
     print(Dialogs().error("No, no, no... That was a mistake!"))
     print(Dialogs().getOpenFileName("Ah I forgot... please upload"))
     print(Dialogs().killer("This is the end my friend .... "))
