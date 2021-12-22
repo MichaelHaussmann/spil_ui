@@ -1,7 +1,12 @@
+"""
+The EngineActionHandler is not part of spil_ui.
+
+"""
 # Uses Qt.py
 from Qt import QtWidgets
 from spil_ui.util.dialogs import Dialogs
-import engines
+# import engines
+from pipe_action import engines
 
 from spil import logging, SpilException
 log = logging.get_logger(name="spil_ui")
@@ -69,10 +74,6 @@ class EngineActionHandler(AbstractActionHandler, QtWidgets.QWidget):  # inherits
 
         log.debug('sender: ["{0}"]'.format(sender))
 
-        if sender in self.engine.needs_confirm:
-            if not self.uio.warn('This function may alter the scene and is not undoable. Are you sure?', withCancel=True):
-                return
-
         try:
             self.engine.run_action(sender, sid)
             if self.callback:
@@ -84,3 +85,18 @@ class EngineActionHandler(AbstractActionHandler, QtWidgets.QWidget):  # inherits
         except SpilException as e:
             self.uio.error('{0}'.format(e))
 
+
+if __name__ == '__main__':
+
+    # Running the ActionHandler without the Browser UI
+
+    app = QtWidgets.QApplication.instance() or QtWidgets.QApplication([])
+
+    action_ui = EngineActionHandler()
+    action_ui.init(action_ui, QtWidgets.QGridLayout())
+    action_ui.update('FTOT')
+    print(action_ui.engine.get_actions('FTOT'))
+    action_ui.show()
+    action_ui.update('FTOT/A/CHR/TITI')
+    action_ui.show()
+    app.exec_()

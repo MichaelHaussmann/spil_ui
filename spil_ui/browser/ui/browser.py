@@ -49,7 +49,7 @@ from spil_ui.browser.ui.qt_helper import addListWidgetItem, clear_layout, addTab
 
 # FS and Files are abstracted / to a data delegate
 from spil import Data as FS, Sid, SpilException, conf
-import engines
+from pipe_action import engines  #FIXME: remove this
 from spil_ui.browser.ui.action_handler import get_action_handler
 
 import spil.util.log as sl
@@ -256,6 +256,14 @@ class Browser(QtWidgets.QMainWindow):
             # dirty technique to force single frame search for speed.
             # children = sorted(list(FS().get(search + '?state=WIP' + ('&frame=0101' if self.search.basetype == 'render' else ''), as_sid=False)))
             children = sorted(list(FS().get(search, as_sid=False)))
+
+            #children = list(filter(bool, [Sid(s) for s in children]))
+
+            # above is same as:
+            # children = sorted(list(FS().get(search, as_sid=True)))
+            # which is potentially slower in PY2. TODO: profile
+            # we need to limit to valid Sids to avoid pseudo Sids to be listed (CHR_CRASH_SUB_WIP_ "V001_autosave_1" version
+            # dont forget to comment sid = Sid(sid) line 270
 
             parent.setRowCount(len(children))
             for row, sid in enumerate(children):
@@ -486,6 +494,8 @@ def open_browser(sid=None, do_new=False):
         browser_window.raise_()
         browser_window.setWindowState(browser_window.windowState() & ~QtCore.Qt.WindowMinimized | QtCore.Qt.WindowActive)
         browser_window.show()
+
+    return browser_window
 
 
 def app(sid=None):
