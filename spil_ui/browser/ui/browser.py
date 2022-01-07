@@ -257,7 +257,7 @@ class Browser(QtWidgets.QMainWindow):
             # children = sorted(list(FS().get(search + '?state=WIP' + ('&frame=0101' if self.search.basetype == 'render' else ''), as_sid=False)))
             children = sorted(list(FS().get(search, as_sid=False)))
 
-            #children = list(filter(bool, [Sid(s) for s in children]))
+            children = list(filter(bool, [Sid(s) for s in children]))
 
             # above is same as:
             # children = sorted(list(FS().get(search, as_sid=True)))
@@ -267,7 +267,7 @@ class Browser(QtWidgets.QMainWindow):
 
             parent.setRowCount(len(children))
             for row, sid in enumerate(children):
-                sid = Sid(sid)
+                # sid = Sid(sid)
                 sid_color = sid_colors.get('published') if sid.get_with(state='OK').exists() else None
                 item = addTableWidgetItem(parent, sid, sid, row=row, column=0, fgcolor=sid_color)
 
