@@ -2,7 +2,7 @@
 """
 This file is part of SPIL, The Simple Pipeline Lib.
 
-(C) copyright 2019-2021 Michael Haussmann, spil@xeo.info
+(C) copyright 2019-2022 Michael Haussmann, spil@xeo.info
 
 SPIL is free software: you can redistribute it and/or modify it under the terms of the GNU Lesser General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 
@@ -19,8 +19,6 @@ TODO:
 - arrow keys (up/down) in listwidgets
 - last action in conf for double click / default action
 - actions refresh browser when done
-- code options (maya/movie/OK/WIP, etc) in a dynamic way - currently all hard coded.  
-
 
     The Search circle is basically:
     search -> results -> selection / input -> current -> search
@@ -61,13 +59,9 @@ log.setLevel(logging.INFO)
 UserRole = QtCore.Qt.UserRole
 ui_path = os.path.join(os.path.dirname(__file__), 'qt/browser.ui')
 
-searchers = ['*', ',', '>', '<', '**']
-entity_version_slit = 'version'  # key that separates entity blocs/lists representation and the table bloc representation
-table_bloc_columns = ['Sid', 'Comment', 'Size', 'Time']
-table_bloc_attributes = ['comment', 'size', 'time']
-search_reset_keys = ['project', 'type', 'cat', 'seq']  # these fields trigger a reset of the search sid - else we are "sticky" and only change the given key.
-basetype_to_cut = {'render': 'shot', 'default': 'task'}  # cut individual columns from the version window
-extension_filters = ['maya', 'movie', 'cache', 'img']  # 'nk',
+from spil_ui.conf import searchers, is_leaf
+from spil_ui.conf import table_bloc_columns, table_bloc_attributes, extension_filters
+from spil_ui.conf import search_reset_keys, basetype_to_cut, basetype_to_leafkey, basetype_clipped_versions
 
 """ WIP for dynamic options
 version_filters = {
@@ -250,6 +244,8 @@ class Browser(QtWidgets.QMainWindow):
 
             search = search + ('?version=>' if self.last_cb.isChecked() else '')
             search = search + '?state=~WIP'  # FIXME: temporary hide OK
+            if self.search.basetype in basetype_clipped_versions and not ext_filter:
+                search = search.replace('**', '*')
 
             log.debug('Final search: {}'.format(search))
 
@@ -359,7 +355,7 @@ class Browser(QtWidgets.QMainWindow):
             log.debug('edit_search {} -> {}'.format(search_sid, searchers))
             return search_sid
 
-        if search_sid.is_leaf():
+        if is_leaf(search_sid):
             return search_sid
 
         return Sid(str(search_sid) + '/*')
@@ -383,8 +379,8 @@ class Browser(QtWidgets.QMainWindow):
         log.debug('New search cycle: ' + str(search_sid))
         search_sid = Sid(search_sid)
 
-        # if it is a file, we keep the current search as long as it matches
-        if search_sid.get('ext') and search_sid.match(self.search):
+        # if it is a leaf (typically a file), we keep the current search as long as it matches
+        if is_leaf(search_sid) and search_sid.match(self.search):
             log.debug('We selected File Sid "{}" - Setting Current Sid but keeping search sid '.format(search_sid))
             self.current_sid = search_sid
             self.update_current_sid()
