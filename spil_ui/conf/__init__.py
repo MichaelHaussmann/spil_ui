@@ -33,7 +33,7 @@ basetype_to_leafkey = {'render': 'layer'}
 # for some search types, the version search gets "clipped", meaning "**" is switched to "*"
 basetype_clipped_versions = ['render']
 
-extension_filters = ['maya', 'movie', 'cache', 'img']  # 'nk', 'spp'
+extension_filters = ['maya', 'movie', 'cache', 'img', 'nk']  # 'nk', 'spp'
 
 
 #  "leaf" means the last key of a Sid. Typically the extension "ext". Can be overridden depending on type.
