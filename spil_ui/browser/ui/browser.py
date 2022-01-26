@@ -334,7 +334,8 @@ class Browser(QtWidgets.QMainWindow):
             sid = Sid(sid)
             key = sid.keytype
             if self.search.type and key not in search_reset_keys:
-                search = self.search.get_with(key=key, value=sid.get(key))
+                # TODO: implement this in the Sid, and document
+                search = Sid(str(self.search) + '?{}=~{}'.format(key, sid.get(key)) )  # .get_with(key=key, value='~' + sid.get(key))  {
                 self.launch_search(search)
             else:
                 self.launch_search(sid)
