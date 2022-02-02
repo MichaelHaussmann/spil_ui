@@ -2,7 +2,7 @@
 """
 This file is part of SPIL, The Simple Pipeline Lib.
 
-(C) copyright 2019-2021 Michael Haussmann, spil@xeo.info
+(C) copyright 2019-2022 Michael Haussmann, spil@xeo.info
 
 SPIL is free software: you can redistribute it and/or modify it under the terms of the GNU Lesser General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 
@@ -18,12 +18,14 @@ Created on 22 dec. 2011
 # Uses Qt.py
 from Qt.QtWidgets import QMessageBox, QApplication, QWidget, QFileDialog, QInputDialog, QLineEdit
 from Qt.QtWidgets import QDialog
+from Qt.QtWidgets import QMainWindow
 from Qt.QtCore import QCoreApplication
 
+from spil_ui.conf import application_name
 
-# from spil_ui import conf
+
 class conf():
-    application_name = 'Pikko'
+    application_name = application_name
 
 
 class ChoiceBox(QDialog):
@@ -187,6 +189,28 @@ class Dialogs(QWidget):
             if fxMsgBox.msgBox.clickedButton() == getattr(fxMsgBox, choice):
                 return (choices.index(choice) + 1)
 
+    def getFromUi(self, ui, getter='sid'):
+        """
+        Simple little wrapper for UIs to return a value.
+
+        Execs and show() the ui and returns the value from given "getter".
+
+        The function waits for the UI to be closed.
+        Works only with Dialogs, not with MainWindows.
+
+        Example:
+            from pipe_action.tools.asset.ui import create_asset_ui as cui
+            result = Dialogs().getFromUi(ui=cui.CreateAssetUI(sid), getter='result_sid')
+        """
+        if isinstance(ui, QMainWindow):
+            raise Exception('[Dialogs.getFromUi] The given UI must not be a MainWindow.\nGiven {}'.format(ui.__class__))
+        try:
+            ui.show()
+            ui.exec_()
+            return getattr(ui, getter)
+        except Exception as ex:
+            raise Exception('[Dialogs.getFromUi] Unable to get value from ui : "{}"'.format(ex))
+
 
 if __name__ == '__main__':
 
@@ -196,6 +220,13 @@ if __name__ == '__main__':
     app = QApplication(sys.argv)
 
     print("debut")
+
+    """
+    from ....tools.asset.ui import create_asset_ui as cui
+    sid = 'FTOT/A/*'
+    result = Dialogs().getFromUi(ui=cui.CreateAssetUI(sid), getter='result_sid')
+    print(result)
+    """
 
     print(Dialogs().getTextField('Please enter a very long text here: ', '...', size=(200, 400)))
     print(Dialogs().getText('Default choice', 'Not a bad choice either'))
