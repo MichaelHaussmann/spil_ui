@@ -15,6 +15,7 @@ If not, see <https://www.gnu.org/licenses/>.
 
 sid_usage_history_len = 20
 application_name = 'Pikko'
+browser_title = 'Pikko @ Kombbo'
 
 # Configuration for the Browser
 
@@ -39,4 +40,14 @@ extension_filters = ['maya', 'movie', 'cache', 'img', 'nk']  # 'nk', 'spp'
 #  "leaf" means the last key of a Sid. Typically the extension "ext". Can be overridden depending on type.
 def is_leaf(sid):
     return sid.is_leaf() or sid.keytype == basetype_to_leafkey.get(sid.basetype, 'ext')
+
+
+def get_action_handler():
+    try:
+        from pipe_action.libs.ui.action_handler import EngineActionHandler
+        return EngineActionHandler()
+    except Exception as ex:
+        print(ex)
+        from spil_ui.browser.ui.action_handler import ExampleActionHandler
+        return ExampleActionHandler()
 

@@ -1,21 +1,34 @@
+# -*- coding: utf-8 -*-
 """
-The EngineActionHandler is not part of spil_ui.
+This file is part of SPIL, The Simple Pipeline Lib.
+
+(C) copyright 2019-2022 Michael Haussmann, spil@xeo.info
+
+SPIL is free software: you can redistribute it and/or modify it under the terms of the GNU Lesser General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
+
+SPIL is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more details.
+
+You should have received a copy of the GNU Lesser General Public License along with SPIL.
+If not, see <https://www.gnu.org/licenses/>.
+
+"""
+
+"""
+The ActionHandler is a way to add actions to the Browser.
+
+On each Sid selection in the browser, the ActionHandler's update method is called, with the given selection.
+
+The handler can then accordingly construct buttons and other features.
+
+The ActionHandler can be run as a standalone, like in the main.
 
 """
 # Uses Qt.py
 from Qt import QtWidgets
 from spil_ui.util.dialogs import Dialogs
-# import engines
-from pipe_action import engines
 
 from spil import logging, SpilException
-log = logging.get_logger(name="spil_ui")
-
-
-def get_action_handler():
-
-    return EngineActionHandler()
-    # return AbstractActionHandler()  #
+log = logging.get_logger("action_handler")
 
 
 class AbstractActionHandler(object):
@@ -26,14 +39,15 @@ class AbstractActionHandler(object):
     def update(self, selection):
         pass
 
+    def __str__(self):
+        return self.__class__.__name__
 
-class EngineActionHandler(AbstractActionHandler, QtWidgets.QWidget):  # inherits QWidget to have a sender() on button clic
+
+class ExampleActionHandler(AbstractActionHandler, QtWidgets.QWidget):  # inherits QWidget to have a sender() on button clic
 
     def __init__(self):
-        super(EngineActionHandler, self).__init__()
+        super(ExampleActionHandler, self).__init__()
         self.uio = Dialogs()
-        self.engine = engines.get()
-        log.debug('Loaded engine {}'.format(self.engine))
         self.selection = None
         self.buttons = []
 
@@ -49,16 +63,16 @@ class EngineActionHandler(AbstractActionHandler, QtWidgets.QWidget):  # inherits
 
         self.selection = selection
 
-        self.action_box.setTitle(self.engine.name.replace('_', ' ').capitalize())
+        self.action_box.setTitle('Actions')
         for b in self.buttons:
             b.setVisible(False)
             b.deleteLater()
         self.buttons = []
 
-        for action in self.engine.get_actions(self.selection):
-            button = QtWidgets.QPushButton(action.get("label"), self.parent_window)
+        for action in self.get_actions_by_sid(self.selection):
+            button = QtWidgets.QPushButton(action, self.parent_window)
             # button.setToolTip((getattr(self.engine, action.get("name")).__doc__ or '').strip().replace('\t', ''))
-            button.setObjectName(action.get("name"))
+            button.setObjectName(action)
             button.clicked.connect(self.run_actions)
             self.action_layout.addWidget(button)
             self.buttons.append(button)
@@ -75,7 +89,7 @@ class EngineActionHandler(AbstractActionHandler, QtWidgets.QWidget):  # inherits
         log.debug('sender: ["{0}"]'.format(sender))
 
         try:
-            self.engine.run_action(sender, sid)
+            self.runner(sender, sid)
             if self.callback:
                 self.callback(sid)
 
@@ -85,6 +99,14 @@ class EngineActionHandler(AbstractActionHandler, QtWidgets.QWidget):  # inherits
         except SpilException as e:
             self.uio.error('{0}'.format(e))
 
+    def runner(self, action, selection):
+        msg = 'Now running {} on "{}"'.format(action, selection)
+        log.info(msg)
+        self.uio.inform(msg)
+
+    def get_actions_by_sid(self, selection):
+        return ['ExampleA', 'ExampleB']
+
 
 if __name__ == '__main__':
 
@@ -92,10 +114,9 @@ if __name__ == '__main__':
 
     app = QtWidgets.QApplication.instance() or QtWidgets.QApplication([])
 
-    action_ui = EngineActionHandler()
+    action_ui = ExampleActionHandler()
     action_ui.init(action_ui, QtWidgets.QGridLayout())
     action_ui.update('FTOT')
-    print(action_ui.engine.get_actions('FTOT'))
     action_ui.show()
     action_ui.update('FTOT/A/CHR/TITI')
     action_ui.show()

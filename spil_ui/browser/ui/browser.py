@@ -15,6 +15,8 @@ If not, see <https://www.gnu.org/licenses/>.
 
 """
 TODO:
+- window opening size and position, better default, and store for user
+- stylesheet
 - tab order (and arrows left/right) for mouseless navigation
 - arrow keys (up/down) in listwidgets
 - last action in conf for double click / default action
@@ -41,14 +43,11 @@ from Qt import QtCore, QtCompat, QtWidgets, QtGui
 # from Qt.QtWidgets import QMenu, QAction
 # from Qt.QtCore import Qt
 
-from spil.util.utils import uniqfy  # FIXME: deep import
+from spil.util.utils import uniqfy  # TODO: refactor sid history
 
 from spil_ui.browser.ui.qt_helper import addListWidgetItem, clear_layout, addTableWidgetItem, table_css
 
-# FS and Files are abstracted / to a data delegate
-from spil import Data as FS, Sid, SpilException, conf
-from pipe_action import engines  #FIXME: remove this
-from spil_ui.browser.ui.action_handler import get_action_handler
+from spil import Data as DB, Sid, conf
 
 import spil.util.log as sl
 sl.setLevel(sl.ERROR)
@@ -59,26 +58,13 @@ log.setLevel(logging.INFO)
 UserRole = QtCore.Qt.UserRole
 ui_path = os.path.join(os.path.dirname(__file__), 'qt/browser.ui')
 
-from spil_ui.conf import searchers, is_leaf
+from spil_ui.conf import searchers, is_leaf, browser_title, get_action_handler
 from spil_ui.conf import table_bloc_columns, table_bloc_attributes, extension_filters
-from spil_ui.conf import search_reset_keys, basetype_to_cut, basetype_to_leafkey, basetype_clipped_versions
-
-""" WIP for dynamic options
-version_filters = {
-                    'shot': {'state': ['WIP', 'OK']},
-                    'render': {'state': ['WIP', 'OK']},
-                  }
-
-basetype_to_extensions = {
-                        'shot': ['maya', 'movie', 'cache'],
-                        'render': ['img'],
-                         }
-"""
+from spil_ui.conf import search_reset_keys, basetype_to_cut, basetype_clipped_versions
 
 sid_colors = {'published': QtGui.QColor(207, 229, 85)}
 
-#Right clic : Open unloaded, Copy Sid, Add to history, Open OK, edit comment, edit json
-#TODO: perfect Sid paste, including abc (and add to history ?), tab order, arrow keys
+
 class Browser(QtWidgets.QMainWindow):
 
     cb = QtWidgets.QApplication.clipboard()  # TODO: use
@@ -86,27 +72,22 @@ class Browser(QtWidgets.QMainWindow):
     def __init__(self, search=None):
         super(Browser, self).__init__()
         QtCompat.loadUi(ui_path, self)
-        self.setWindowTitle('{} - Browser'.format('Pikko @ Kombbo'))
+        self.setWindowTitle('{} - Browser'.format(browser_title))
 
         # init sources
-        self.engine = engines.get()
         self.action_handler = get_action_handler()
         self.action_handler.init(self, self.central_layout, callback=self.fill_history)
         log.debug('Loaded action handler {}'.format(self.action_handler))
         self.sid_history = conf.sid_usage_history
-        log.debug('Loaded engine {}'.format(self.engine))
 
         self.buttons = []
         self.boxes = []
         self.search = None
         self.previous_sid = Sid()
 
-        # Init of the SearchSid
-        # Either passed argument, or current from engine, or last from history, or empty Sid
+        # Init of the SearchSid: either argument, or last from history, or empty Sid
         if search:
             search = Sid(search)
-        elif self.engine.get_current_sid():
-            search = self.engine.get_current_sid()
         elif self.sid_history:
             search = Sid(self.sid_history[-1])
         else:
@@ -150,7 +131,7 @@ class Browser(QtWidgets.QMainWindow):
             if list_widget.count():
                 continue
 
-            found = FS().get(search.get_as(key).get_with(key=key, value='*'), as_sid=False)
+            found = DB().get(search.get_as(key).get_with(key=key, value='*'), as_sid=False)
 
             for i in sorted(list(found)):
                 i = Sid(i)
@@ -192,7 +173,7 @@ class Browser(QtWidgets.QMainWindow):
             self.entities_lo.setTabOrder(self.sid_widgets)
         """
 
-    def build_versions(self):  # IDEA: load only last versions, with a drop down for all versions (https://openpype.io/docs/artist_tools#load-another-version)
+    def build_versions(self):  # IDEA: load only last versions, with a drop down for all versions
 
         parent = self.versions_tw
         parent.clear()
@@ -207,7 +188,7 @@ class Browser(QtWidgets.QMainWindow):
 
         log.debug('search on start {}'.format(self.search))
 
-        if self.search:  # if the current search is defined, typed. #FIXME: not clear. #SMELL
+        if self.search:  # if the current search is defined, typed. #TODO: clarify. A non typed Sid is False, but this is risky.
 
             if '/**' in self.search.string:
                 search = self.search.string
@@ -222,8 +203,6 @@ class Browser(QtWidgets.QMainWindow):
         else:
 
             search = self.search.string
-
-        # print(f'intermediate: search)
 
         if search:
 
@@ -243,35 +222,27 @@ class Browser(QtWidgets.QMainWindow):
             self.input_sid_le.setText(search)
 
             search = search + ('?version=>' if self.last_cb.isChecked() else '')
-            search = search + '?state=~WIP'  # FIXME: temporary hide OK
+            search = search + '?state=~WIP'  # FIXME: hard coded
             if self.search.basetype in basetype_clipped_versions and not ext_filter:
                 search = search.replace('**', '*')
 
             log.debug('Final search: {}'.format(search))
 
-            # dirty technique to force single frame search for speed.
-            # children = sorted(list(FS().get(search + '?state=WIP' + ('&frame=0101' if self.search.basetype == 'render' else ''), as_sid=False)))
-            children = sorted(list(FS().get(search, as_sid=False)))
-
-            children = list(filter(bool, [Sid(s) for s in children]))
-
-            # above is same as:
-            # children = sorted(list(FS().get(search, as_sid=True)))
-            # which is potentially slower in PY2. TODO: profile
-            # we need to limit to valid Sids to avoid pseudo Sids to be listed (CHR_CRASH_SUB_WIP_ "V001_autosave_1" version
-            # dont forget to comment sid = Sid(sid) line 270
+            children = sorted(list(DB().get(search, as_sid=True)))  # this option sorts Sids - #TODO profile
+            # children = sorted(list(DB().get(search, as_sid=False)))
+            # children = list(filter(bool, [Sid(s) for s in children]))
 
             parent.setRowCount(len(children))
             for row, sid in enumerate(children):
-                # sid = Sid(sid)
-                sid_color = sid_colors.get('published') if sid.get_with(state='OK').exists() else None
+
+                sid_color = sid_colors.get('published') if sid.get_with(state='OK').exists() else None  # FIXME: hardcoded
                 item = addTableWidgetItem(parent, sid, sid, row=row, column=0, fgcolor=sid_color)
 
                 for i, attr in enumerate(table_bloc_attributes):
                     addTableWidgetItem(parent, sid, sid.get_attr(attr) or '', row=row, column=i+1)
 
                 # log.debug('{} // {} ?'.format(sid, self.search))
-                if sid == self.search:  # FIXME: must also work during update
+                if sid == self.search:
                     item.setSelected(True)
                     parent.setCurrentItem(item)
                     self.current_sid = sid
@@ -371,7 +342,7 @@ class Browser(QtWidgets.QMainWindow):
         - select_search (click select a sid)
 
         Launches a new search cycle.
-        - instanciates the Sid
+        - instantiates the Sid
         - calls edit_search: add search criterias ('*') if needed.
         - sets self.search
         - sets the input field
@@ -447,13 +418,7 @@ class Browser(QtWidgets.QMainWindow):
         else:
             self.sid_history_cb.addItem('')
 
-        for sid in reversed(self.sid_history):
-            """ #TODO: limit history to current engine
-            if not self.history_all_CB.isChecked():
-                tmp = Sid(sid=str(sid))
-                if tmp.get('ext') and tmp.get('ext') != conf.context_to_ext.get(self.ui_context):
-                    continue
-            """
+        for sid in reversed(self.sid_history):  # history only for current environment ?
             self.sid_history_cb.addItem(str(sid))
 
     def connect_events(self):
