@@ -32,12 +32,14 @@ QTableView::item:focus{ border: 0px; border-color: transparent; padding: 0px; ma
 '''
 
 
-def addTableWidgetItem(parent, sid, label, row, column=1):
+def addTableWidgetItem(parent, sid, label, row, column=1, fgcolor=None):
     item = QtWidgets.QTableWidgetItem()
     item.setData(UserRole, sid)
     item.setText(str(label))
     parent.setItem(row, column, item)
     # item.setStyleSheet("QTableWidget::item { padding: 50px; border: 5px; }")
+    if fgcolor:
+        item.setForeground(fgcolor)
     return item
 
 

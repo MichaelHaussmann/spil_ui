@@ -1,1 +1,1 @@
-from spil_ui.browser.ui.browser import Browser
+from spil_ui.browser.ui.browser import Browser, open_browser
