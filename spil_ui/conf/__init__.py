@@ -23,10 +23,10 @@ searchers = ['*', ',', '>', '<', '**']
 
 table_bloc_columns = ['Sid', 'Comment', 'Size', 'Time']
 table_bloc_attributes = ['comment', 'size', 'time']
-search_reset_keys = ['project', 'type', 'cat', 'seq']  # these fields trigger a reset of the search sid - else we are "sticky" and only change the given key.
+search_reset_keys = ['project', 'type'] # , 'assettype', 'sequence']  # these fields trigger a reset of the search sid - else we are "sticky" and only change the given key.
 
 # key that separates entity lists (left side) and the version table (right side), depending of the search's basetype
-basetype_to_cut = {'render': 'version', 'default': 'task'}
+basetype_to_cut = {'asset': 'asset', 'shot': 'shot', 'default': 'tasktype'}
 
 # usually, the 'ext' is considered the "leaf" (last) key of a Sid. Depending on the basetype, we can override this.
 basetype_to_leafkey = {'render': 'layer'}

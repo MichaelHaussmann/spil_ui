@@ -222,7 +222,7 @@ class Browser(QtWidgets.QMainWindow):
             self.input_sid_le.setText(search)
 
             search = search + ('?version=>' if self.last_cb.isChecked() else '')
-            search = search + '?state=~WIP'  # FIXME: hard coded
+            # search = search + '?state=~WIP'  # FIXME: hard coded
             if self.search.basetype in basetype_clipped_versions and not ext_filter:
                 search = search.replace('**', '*')
 
