@@ -14,15 +14,15 @@ If not, see <https://www.gnu.org/licenses/>.
 """
 
 sid_usage_history_len = 20
-application_name = 'ArtFX'
-browser_title = 'Browser @ ArtFX'
+application_name = 'Spil'
+browser_title = 'Browser @ Spil'
 
 # Configuration for the Browser
 
 searchers = ['*', ',', '>', '<', '**']
 
-table_bloc_columns = ['Sid', 'Comment', 'Size', 'Time']
-table_bloc_attributes = ['comment', 'size', 'time']
+table_bloc_columns = ['Sid']  # , 'Comment', 'Size', 'Time']
+table_bloc_attributes = []  # 'comment', 'size', 'time']
 search_reset_keys = ['project', 'type']  # , 'assettype', 'sequence']  # these fields trigger a reset of the search sid - else we are "sticky" and only change the given key.
 
 # key that separates entity lists (left side) and the version table (right side), depending of the search's basetype
@@ -34,7 +34,7 @@ basetype_to_leafkey = {}  # {'render': 'layer'}
 # for some search types, the version search gets "clipped", meaning "**" is switched to "*"
 basetype_clipped_versions = []  # ['render']
 
-extension_filters = ['maya', 'movie', 'cache', 'img', 'nk']  # 'nk', 'spp'
+extension_filters = ['maya', 'hou', 'blend', 'movie', 'cache', 'img', 'nk']  # 'nk', 'spp'
 
 
 #  "leaf" means the last key of a Sid. Typically the extension "ext". Can be overridden depending on type.
@@ -44,7 +44,7 @@ def is_leaf(sid):
 
 def get_action_handler():
     try:
-        from pipe_action.libs.ui.action_handler import EngineActionHandler
+        from spil_action.libs.ui.action_handler import EngineActionHandler
         return EngineActionHandler()
     except Exception as ex:
         print(ex)
