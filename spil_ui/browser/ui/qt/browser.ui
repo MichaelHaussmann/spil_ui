@@ -168,21 +168,6 @@
           <string>Name</string>
          </property>
         </column>
-        <column>
-         <property name="text">
-          <string>Date</string>
-         </property>
-        </column>
-        <column>
-         <property name="text">
-          <string>Size</string>
-         </property>
-        </column>
-        <column>
-         <property name="text">
-          <string>User</string>
-         </property>
-        </column>
        </widget>
       </item>
       <item>
