@@ -47,7 +47,7 @@ from spil.util.utils import uniqfy  # TODO: refactor sid history
 
 from spil_ui.browser.ui.qt_helper import addListWidgetItem, clear_layout, addTableWidgetItem, table_css
 
-from spil import Data as DB, Sid, conf
+from spil import FindInPaths as Finder, Sid, conf
 
 import spil.util.log as sl
 sl.setLevel(sl.ERROR)
@@ -62,7 +62,7 @@ from spil_ui.conf import searchers, is_leaf, browser_title, get_action_handler
 from spil_ui.conf import table_bloc_columns, table_bloc_attributes, extension_filters
 from spil_ui.conf import search_reset_keys, basetype_to_cut, basetype_clipped_versions
 
-sid_colors = {'published': QtGui.QColor(207, 229, 85)}
+sid_colors = {'published': QtGui.QColor(85, 230, 85)}
 
 
 class Browser(QtWidgets.QMainWindow):
@@ -94,9 +94,13 @@ class Browser(QtWidgets.QMainWindow):
             search = Sid('*')
         log.debug(search)
 
-        self.ok_cb.setVisible(False)  #FIXME: temp
-        self.wip_cb.setVisible(False)
+        # State filter  # FIXME: hard coded, to be changed
         self.state_gb.setVisible(False)
+        self.ok_cb.setVisible(False)
+        self.ok_cb.setText('publish')
+        self.wip_cb.setVisible(False)
+        self.wip_cb.setText('work')
+
         self.init_extension_filters()
 
         self.current_sid = Sid()
@@ -118,7 +122,7 @@ class Browser(QtWidgets.QMainWindow):
         else:
             search = self.search.copy()
 
-        for key in search.data.keys():  # traverses search_sid by key: project, type, ...
+        for key in search.fields.keys():  # traverses search_sid by key: project, type, ...
 
             if self.sid_widgets.get(key):  # if the widget already exists, we get it...
                 list_widget = self.sid_widgets.get(key)
@@ -131,7 +135,7 @@ class Browser(QtWidgets.QMainWindow):
             if list_widget.count():
                 continue
 
-            found = DB().get(search.get_as(key).get_with(key=key, value='*'), as_sid=False)
+            found = Finder().find(search.get_as(key).get_with(key=key, value='*'), as_sid=False)
 
             for i in sorted(list(found)):
                 i = Sid(i)
@@ -221,21 +225,21 @@ class Browser(QtWidgets.QMainWindow):
 
             self.input_sid_le.setText(search)
 
-            search = search + ('?version=>' if self.last_cb.isChecked() else '')
-            search = search + '?state=~WIP'  # FIXME: hard coded
+            search = search + ('?version=>' if self.last_cb.isChecked() else '')  # FIXME: hard coded
+            # search = search + '?state=~w'  # FIXME: hard coded
             if self.search.basetype in basetype_clipped_versions and not ext_filter:
                 search = search.replace('**', '*')
 
             log.debug('Final search: {}'.format(search))
 
-            children = sorted(list(DB().get(search, as_sid=True)))  # this option sorts Sids - #TODO profile
-            # children = sorted(list(DB().get(search, as_sid=False)))
+            children = sorted(list(Finder().find(search, as_sid=True)))  # this option sorts Sids - #TODO profile
+            # children = sorted(list(Finder().find(search, as_sid=False)))
             # children = list(filter(bool, [Sid(s) for s in children]))
 
             parent.setRowCount(len(children))
             for row, sid in enumerate(children):
 
-                sid_color = sid_colors.get('published') if sid.get_with(state='OK').exists() else None  # FIXME: hardcoded
+                sid_color = sid_colors.get('published') if sid.get_with(state='p').exists() else None  # FIXME: hardcoded
                 item = addTableWidgetItem(parent, sid, sid, row=row, column=0, fgcolor=sid_color)
 
                 for i, attr in enumerate(table_bloc_attributes):
