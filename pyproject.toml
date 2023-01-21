@@ -10,7 +10,7 @@ exclude = [".gitignore"]
 
 [project]
 name = "spil_ui"
-version = "0.0.4"
+version = "0.1.0"
 description = "Qt UI for Spil, The Simple Pipeline Lib."
 readme = "README.md"
 authors = [{ name = "Michael Haussmann", email = "spil@xeo.info" }]
