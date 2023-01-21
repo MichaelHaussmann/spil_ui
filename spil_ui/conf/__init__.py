@@ -10,7 +10,6 @@ SPIL is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY
 
 You should have received a copy of the GNU Lesser General Public License along with SPIL.
 If not, see <https://www.gnu.org/licenses/>.
-
 """
 
 sid_usage_history_len = 20
@@ -47,7 +46,5 @@ def get_action_handler():
         from spil_action.libs.ui.action_handler import EngineActionHandler
         return EngineActionHandler()
     except Exception as ex:
-        print(ex)
         from spil_ui.browser.ui.action_handler import ExampleActionHandler
         return ExampleActionHandler()
-

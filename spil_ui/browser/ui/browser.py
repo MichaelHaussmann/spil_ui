@@ -2,7 +2,7 @@
 """
 This file is part of SPIL, The Simple Pipeline Lib.
 
-(C) copyright 2019-2022 Michael Haussmann, spil@xeo.info
+(C) copyright 2019-2023 Michael Haussmann, spil@xeo.info
 
 SPIL is free software: you can redistribute it and/or modify it under the terms of the GNU Lesser General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 
@@ -10,11 +10,13 @@ SPIL is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY
 
 You should have received a copy of the GNU Lesser General Public License along with SPIL.
 If not, see <https://www.gnu.org/licenses/>.
-
 """
+from __future__ import annotations
+from typing import Optional
 
 """
 TODO:
+- code: cleanup, documentation, typing, formatting (apologies to you reader)
 - window opening size and position, better default, and store for user
 - stylesheet
 - tab order (and arrows left/right) for mouseless navigation
@@ -66,8 +68,22 @@ sid_colors = {'published': QtGui.QColor(85, 230, 85)}
 
 
 class Browser(QtWidgets.QMainWindow):
+    """
+    The Browser window launches searches for the current search sid.
+    The resulting "current Sid" is represented in clickable parts:
+    - on the lefts the "entity" columns, on for each part
+    - on the right the "version" table, one line for earch Sid
 
-    cb = QtWidgets.QApplication.clipboard()  # TODO: use
+    A new search is launched when either
+    - a column selection changes
+    - the "search Sid" field is edited
+    - the sid history (last used Sids) is changed
+
+    An ActionHandler uses the selected Sid to handle actions.
+    Typically showing Buttons and running functions.
+    """
+
+    # cb = QtWidgets.QApplication.clipboard()  # TODO: use
 
     def __init__(self, search=None):
         super(Browser, self).__init__()
@@ -97,9 +113,9 @@ class Browser(QtWidgets.QMainWindow):
         # State filter  # FIXME: hard coded, to be changed
         self.state_gb.setVisible(False)
         self.ok_cb.setVisible(False)
-        self.ok_cb.setText('publish')
+        # self.ok_cb.setText('publish')
         self.wip_cb.setVisible(False)
-        self.wip_cb.setText('work')
+        # self.wip_cb.setText('work')
 
         self.init_extension_filters()
 
@@ -116,6 +132,20 @@ class Browser(QtWidgets.QMainWindow):
         self.build_entities()
 
     def build_entities(self):
+        """
+        Builds "Entity" (Asset or Shot) columns.
+
+        The columns are list_widgets.
+        They are build in a loop, according to the parts of the search_sid.
+
+        This method is followed by "build_versions".
+        Build_entities stops either:
+        - when there are no parts left (eg "hamlet/s/sq010" has 3 parts)
+        - when it hits a "cut" key (as configured in "basetype_to_cut")
+
+        It then goes to "build_versions"
+        - if "/**" is in the search
+        """
 
         if '/**' in self.search.string:
             search = Sid(self.search.string.split('/**')[0])
@@ -178,6 +208,12 @@ class Browser(QtWidgets.QMainWindow):
         """
 
     def build_versions(self):  # IDEA: load only last versions, with a drop down for all versions
+        """
+        Builds a table widget for the last part of the Sid.
+        This method is launched after "build_entities" has finished.
+
+        The current search sid is modified to add extension and "last", as given by the checkboxes.
+        """
 
         parent = self.versions_tw
         parent.clear()
@@ -279,9 +315,15 @@ class Browser(QtWidgets.QMainWindow):
         self.clear_versions()
 
     def clear_versions(self):
+        """
+        Clears the "versions" table widget (the right part of the central layout)
+        """
         self.versions_tw.clear()
 
     def set_sid_from_history(self):  # TODO: history handler
+        """
+        Launches a new search when the Sid history (latest used Sids) is changed.
+        """
         selected = self.sid_history_cb.itemText(self.sid_history_cb.currentIndex())
         if selected:
             log.debug('selected ' + selected)
@@ -370,6 +412,11 @@ class Browser(QtWidgets.QMainWindow):
         self.boot_entities()
 
     def update_current_sid(self):
+        """
+        The current Sid is the one selected, seen at the top center of the UI.
+        When it is updated, this method updates the Qt label,
+        and calls the ActionHandlers update() method.
+        """
         self.current_sid_lb.setText(self.current_sid.string)
         if self.current_sid != self.previous_sid:
             self.previous_sid = self.current_sid
@@ -409,6 +456,17 @@ class Browser(QtWidgets.QMainWindow):
         return list_widget
 
     def fill_history(self, sid=None):
+        """
+        Fills the "history" combo box containing last used Sids.
+
+        Appends the given Sid to it, drops least recently used,
+        to keep it as configured length.
+
+        Args:
+            sid:
+
+        Returns:
+        """
 
         self.sid_history_cb.clear()
 
@@ -433,17 +491,39 @@ class Browser(QtWidgets.QMainWindow):
         # QtWidgets.QShortcut(QtCore.Qt.Key_Up, self.centralwidget, self.select_search)  # TODO: arrow keys in listwidgets
 
     def showEvent(self, arg=None):
+        """
+        When the window is shown.
+        Reads the last used Sid history list from the user config.
+        """
         self.sid_history = conf.sid_usage_history  # TODO : test this : no real refresh
         self.fill_history()
 
     def closeEvent(self, arg=None):
+        """
+        When the window is closed.
+        Persists the last used Sid history list to the user config.
+        """
         try:
             conf.set('sid_usage_history', self.sid_history)
         except Exception:
             pass
 
 
-def open_browser(sid=None, do_new=False):
+def open_browser(sid: Optional[Sid | str] = None, do_new: Optional[bool] = False) -> Browser:
+    """
+    Opens a browser window.
+    If the window already exists, brings the existing one to the front.
+    If do_new is set to True, a new Window instance is created
+
+    (The Qt Application must already exist)
+
+    Args:
+        sid: the ui navigates to the given Sid upon startup
+        do_new: if True, opens a new window instance, else brings the existing one to the front (default).
+
+    Returns:
+        the Browser window object
+    """
 
     global browser_window
     try:
@@ -464,23 +544,30 @@ def open_browser(sid=None, do_new=False):
     return browser_window
 
 
-def app(sid=None):
+def app(sid: Optional[Sid | str] = None) -> None:
+    """
+    Gets or creates a QApplication instance,
+    and opens the Browser window.
 
+    Args:
+        sid: Optional Sid instance or String to start with
+
+    Returns:
+
+    """
+
+    QtCore.QCoreApplication.setAttribute(QtCore.Qt.AA_ShareOpenGLContexts)  # fix
     app = QtWidgets.QApplication.instance() or QtWidgets.QApplication([])
+    # import cProfile  # profiling
+    # cProfile.run('open_browser(sid, do_new=True)', sort=1)
     open_browser(sid)
     app.exec_()
 
 
 if __name__ == '__main__':
 
-    # import cProfile  # profiling
     from spil.util.log import DEBUG, setLevel, WARN, ERROR, INFO
     setLevel(ERROR)
 
-    sid = ''  # FTOT/S/SQ0001/SH0020/LAY/V002/WIP/ma'
-
-    app = QtWidgets.QApplication.instance() or QtWidgets.QApplication([])
-    open_browser(sid)
-    # cProfile.run('open_browser("FTOT/S/SQ0001/SH0020/LAY/V002/WIP/ma", do_new=True)', sort=1)
-    # open_browser(sid)
-    app.exec_()
+    sid = 'hamlet/a/char/ophelia'
+    app()
