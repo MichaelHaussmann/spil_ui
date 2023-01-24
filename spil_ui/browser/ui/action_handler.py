@@ -160,8 +160,7 @@ class ExampleActionHandler(AbstractActionHandler, QtWidgets.QWidget):
     @staticmethod
     def get_actions_by_sid(selection, action=None):
 
-        from spil_ui.conf.example_actions import get_action_for_sid
-
+        from spil_ui.conf.example_actions import get_action_for_sid  # fmt: skip
         actions = get_action_for_sid(selection)
 
         if action:
