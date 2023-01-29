@@ -66,7 +66,7 @@ UserRole = QtCore.Qt.UserRole
 ui_path = os.path.join(os.path.dirname(__file__), "qt/browser.ui")
 
 from spil_ui.conf import is_leaf, browser_title, get_action_handler
-from spil_ui.conf import table_bloc_columns, table_bloc_attributes, extension_filters
+from spil_ui.conf import table_bloc_columns, table_bloc_functions, extension_filters
 from spil_ui.conf import search_reset_keys, basetype_to_cut, basetype_clipped_versions
 
 sid_colors = {"published": QtGui.QColor(85, 230, 85)}
@@ -310,9 +310,9 @@ class Browser(QtWidgets.QMainWindow):
                     parent, sid, sid, row=row, column=0, fgcolor=sid_color
                 )
 
-                for i, attr in enumerate(table_bloc_attributes):
+                for i, func in enumerate(table_bloc_functions):
                     addTableWidgetItem(
-                        parent, sid, sid.get_attr(attr) or "", row=row, column=i + 1
+                        parent, sid, str(func(sid)) or "", row=row, column=i + 1
                     )
 
                 # log.debug('{} // {} ?'.format(sid, self.search))

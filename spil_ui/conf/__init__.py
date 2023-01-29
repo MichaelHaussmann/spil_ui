@@ -18,8 +18,9 @@ browser_title = "Browser @ Spil"
 
 # Configuration for the Browser
 
-table_bloc_columns = ["Sid"]  # , 'Comment', 'Size', 'Time']
-table_bloc_attributes = []  # 'comment', 'size', 'time']
+table_bloc_columns = ["Sid", "Size", "Time"]
+from spil_ui.conf.utils import get_size, get_time
+table_bloc_functions = [get_size, get_time]  # functions that will be called for the colums.
 
 # these fields trigger a reset of the search sid - else we are "sticky" and only change the given key.
 search_reset_keys = [
