@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 This file is part of SPIL, The Simple Pipeline Lib.
 
@@ -269,17 +268,17 @@ class Browser(QtWidgets.QMainWindow):
 
             if "/**" in search and ext_filter:
 
-                # sid contains URI ending. We put it aside, and later append it back
+                # sid contains query ending. We put it aside, and later append it back
                 if search.count("?"):
-                    search, uri = search.split("?", 1)
+                    search, query = search.split("?", 1)
                 else:
-                    uri = ""
+                    query = ""
 
                 search = (
                     search.split("/**")[0]
                     + "/**/"
                     + ",".join(ext_filter)
-                    + ("?" + uri if uri else "")
+                    + ("?" + query if query else "")
                 )
 
             self.input_sid_le.setText(search)
