@@ -8,7 +8,7 @@ It is dynamic, and adapts to the Sids length and content.
 ActionHandlers can be implemented to show and call actions matching the selected Sid.
 An example ActionHandler is included.
 
-[![Spil Qt UI](https://raw.githubusercontent.com/MichaelHaussmann/spil/py3/docs/img/spil_ui.png)](https://github.com/MichaelHaussmann/spil_ui)
+[![Spil Qt UI](https://raw.githubusercontent.com/MichaelHaussmann/spil/dev/docs/img/spil_ui.png)](https://github.com/MichaelHaussmann/spil_ui)
 
 The UI is built using Qt.py, and works with PySide2 / Qt5.
 (Spil works with python >=3.7)
