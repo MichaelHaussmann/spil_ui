@@ -5,12 +5,13 @@ build-backend = "hatchling.build"
 [tool.hatch.build]
 include = [
   "spil_ui",
+  "spil_hamlet_conf"
 ]
 exclude = [".gitignore"]
 
 [project]
 name = "spil_ui"
-version = "0.0.4"
+version = "0.0.5rc1"
 description = "Qt UI for Spil, The Simple Pipeline Lib."
 readme = "README.md"
 authors = [{ name = "Michael Haussmann", email = "spil@xeo.info" }]
@@ -37,9 +38,15 @@ dependencies = [
 requires-python = ">=3.7"
 
 [project.optional-dependencies]
-dev = []
+dev = ['pytest']
 
 [project.urls]
 "Homepage" = "https://github.com/MichaelHaussmann/spil"
 "Documentation" = "https://spil.readthedocs.io"
 
+[tool.pytest.ini_options]
+#filterwarnings = [
+#    "ignore::DeprecationWarning",
+#]
+log_cli = true
+addopts = "--doctest-modules"
