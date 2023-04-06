@@ -5,6 +5,7 @@ build-backend = "hatchling.build"
 [tool.hatch.build]
 include = [
   "spil_ui",
+  "spil_hamlet_conf"
 ]
 exclude = [".gitignore"]
 
