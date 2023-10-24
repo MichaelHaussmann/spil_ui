@@ -2,7 +2,7 @@
 """
 This file is part of SPIL, The Simple Pipeline Lib.
 
-(C) copyright 2019-2021 Michael Haussmann, spil@xeo.info
+(C) copyright 2019-2023 Michael Haussmann, spil@xeo.info
 
 SPIL is free software: you can redistribute it and/or modify it under the terms of the GNU Lesser General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 
@@ -10,16 +10,14 @@ SPIL is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY
 
 You should have received a copy of the GNU Lesser General Public License along with SPIL.
 If not, see <https://www.gnu.org/licenses/>.
-
 """
-
 
 
 from Qt import QtCore, QtWidgets
 
 UserRole = QtCore.Qt.UserRole
 
-table_css = '''
+table_css = """
 QTableView::item { padding: 10px; margin: 2px; border: 0px; }
 QTableView::item:selected {
         padding: 10px; margin: 2px;
@@ -29,7 +27,7 @@ QTableView::item:selected {
         background-color: orange;
         }
 QTableView::item:focus{ border: 0px; border-color: transparent; padding: 0px; margin: 2px; }
-'''
+"""
 
 
 def addTableWidgetItem(parent, sid, label, row, column=1, fgcolor=None):
@@ -44,7 +42,7 @@ def addTableWidgetItem(parent, sid, label, row, column=1, fgcolor=None):
 
 
 def addListWidgetItem(listWidget, data, label):
-    ''' Used to fill a UI listWidget with listWidgetItem (label + data)'''
+    """Used to fill a UI listWidget with listWidgetItem (label + data)"""
     item = QtWidgets.QListWidgetItem()
     item.setData(UserRole, data)
     item.setText(label)
@@ -61,16 +59,3 @@ def clear_layout(layout):
 
 def get_layout_widgets(layout):
     return (layout.itemAt(i) for i in range(layout.count()))
-
-
-"""
-
-self.sid_update_pb.setStyleSheet('''QPushButton{ color: black;
-                                         border-color: transparent;
-                                           background-color: orange;}''')
-        self.sid_update_pb.clicked.connect(self.refresh_sid)
-        
-# self.versions_tw.currentItemChanged.connect(self.get_current_sid)
-
-
-"""
