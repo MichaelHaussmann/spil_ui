@@ -1,7 +1,7 @@
 """
 This file is part of SPIL, The Simple Pipeline Lib.
 
-(C) copyright 2019-2023 Michael Haussmann, spil@xeo.info
+(C) copyright 2019-2024 Michael Haussmann, spil@xeo.info
 
 SPIL is free software: you can redistribute it and/or modify it under the terms of the GNU Lesser General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 
@@ -39,11 +39,9 @@ import os
 from spil import logging
 from collections import OrderedDict
 
-# Uses Qt.py
-from Qt import QtCore, QtCompat, QtWidgets, QtGui
-
-# from Qt.QtWidgets import QMenu, QAction
-# from Qt.QtCore import Qt
+# Uses qtpy
+import qtpy
+from qtpy import QtCore, QtWidgets, QtGui
 
 from spil.util.utils import uniqfy  # TODO: refactor sid history
 from spil_ui.browser.ui.qt_helper import (
@@ -91,7 +89,10 @@ class Browser(QtWidgets.QMainWindow):
 
     def __init__(self, search=None):
         super(Browser, self).__init__()
-        QtCompat.loadUi(ui_path, self)
+        # For some ominous reason, this does not work:
+        # qtpy.uic.loadUi(ui_path, self)
+        from qtpy.uic import loadUi
+        loadUi(ui_path, self)
         self.setWindowTitle(f"{browser_title} - Browser")
 
         # init sources
@@ -605,8 +606,19 @@ def app(sid: Optional[Sid | str] = None) -> None:
 
     QtCore.QCoreApplication.setAttribute(QtCore.Qt.AA_ShareOpenGLContexts)  # fix
     app = QtWidgets.QApplication.instance() or QtWidgets.QApplication([])
-    # import cProfile  # profiling
+
+    # profiling
+    # import cProfile
     # cProfile.run('open_browser(sid, do_new=True)', sort=1)
+
+    # darkstyle
+    # import qdarkstyle
+    # app.setStyleSheet(qdarkstyle.load_stylesheet())
+    # app.setStyleSheet(qdarkstyle.load_stylesheet(palette=qdarkstyle.LightPalette))
+    # app.setStyleSheet(qdarkstyle.load_stylesheet(palette=qdarkstyle.DarkPalette))
+    # qdarktheme.setup_theme("light")
+    # stylesheet = qdarktheme.setup_theme(corner_shape="sharp")
+
     open_browser(sid)
     app.exec_()
 

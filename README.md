@@ -10,7 +10,7 @@ An example ActionHandler is included.
 
 [![Spil Qt UI](https://raw.githubusercontent.com/MichaelHaussmann/spil/main/docs/img/spil_ui.png)](https://github.com/MichaelHaussmann/spil_ui)
 
-The UI is built using Qt.py, and works with PySide2 / Qt5.
+The UI is built using [QtPy](https://github.com/spyder-ide/qtpy), and works with PyQt5, PySide2, PyQt6, PySide6.
 (Spil works with python >=3.7)
 
 It runs on all major DCCs as well as standalone. It was tested in Maya, Houdini, Nuke, and others.

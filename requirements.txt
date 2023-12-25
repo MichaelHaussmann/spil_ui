@@ -1,2 +1,2 @@
-Qt.py
+qtpy
 spil

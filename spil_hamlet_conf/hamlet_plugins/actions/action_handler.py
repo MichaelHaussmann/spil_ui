@@ -4,8 +4,8 @@ On each Sid selection in the browser, the ActionHandler's update method is calle
 The handler can then accordingly construct buttons and other features.
 The ActionHandler can be run as a standalone for testing (as in this main).
 """
-# Uses Qt.py
-from Qt import QtWidgets
+# Uses QtPy
+from qtpy import QtWidgets
 
 from spil_ui.browser.ui.action_handler import AbstractActionHandler
 from spil_ui.util.dialogs import Dialogs

@@ -2,7 +2,7 @@
 """
 This file is part of SPIL, The Simple Pipeline Lib.
 
-(C) copyright 2019-2023 Michael Haussmann, spil@xeo.info
+(C) copyright 2019-2024 Michael Haussmann, spil@xeo.info
 
 SPIL is free software: you can redistribute it and/or modify it under the terms of the GNU Lesser General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 
@@ -13,7 +13,7 @@ If not, see <https://www.gnu.org/licenses/>.
 """
 
 
-from Qt import QtCore, QtWidgets
+from qtpy import QtCore, QtWidgets
 
 UserRole = QtCore.Qt.UserRole
 
