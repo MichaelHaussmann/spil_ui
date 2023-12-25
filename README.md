@@ -25,7 +25,7 @@ On each Sid selection in the browser, the ActionHandler's update method is calle
 The handler can then accordingly construct buttons and other features.
 
 The ActionHandler can be run as a standalone for testing:  
-[![Example ActionHandler Standalone](https://raw.githubusercontent.com/MichaelHaussmann/spil_ui/main/docs/img/action_handler_stdalone.png)]
+![Example ActionHandler](docs/img/action_handler_stdalone.png)
 
 
 ## Limitations
