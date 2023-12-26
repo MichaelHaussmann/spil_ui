@@ -7,10 +7,11 @@ version = '0.0.5'
 requires = [
     "spil",
     "qtpy",
+    "QDarkStyle"
 ]
 
 
-description = "https://github.com/MichaelHaussmann/spil"
+description = "https://github.com/MichaelHaussmann/spil_ui"
 
 authors = ['Michael Haussmann']
 

@@ -607,17 +607,15 @@ def app(sid: Optional[Sid | str] = None) -> None:
     QtCore.QCoreApplication.setAttribute(QtCore.Qt.AA_ShareOpenGLContexts)  # fix
     app = QtWidgets.QApplication.instance() or QtWidgets.QApplication([])
 
+    # darkstyle
+    import qdarkstyle
+    app.setStyleSheet(qdarkstyle.load_stylesheet(palette=qdarkstyle.DarkPalette))
+    # app.setStyleSheet(qdarkstyle.load_stylesheet(palette=qdarkstyle.LightPalette))
+    # app.setStyleSheet(qdarkstyle.load_stylesheet())
+
     # profiling
     # import cProfile
     # cProfile.run('open_browser(sid, do_new=True)', sort=1)
-
-    # darkstyle
-    # import qdarkstyle
-    # app.setStyleSheet(qdarkstyle.load_stylesheet())
-    # app.setStyleSheet(qdarkstyle.load_stylesheet(palette=qdarkstyle.LightPalette))
-    # app.setStyleSheet(qdarkstyle.load_stylesheet(palette=qdarkstyle.DarkPalette))
-    # qdarktheme.setup_theme("light")
-    # stylesheet = qdarktheme.setup_theme(corner_shape="sharp")
 
     open_browser(sid)
     app.exec_()
