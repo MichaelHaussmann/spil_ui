@@ -81,7 +81,8 @@ The ActionHandler is a way to add actions to the Browser.
 On each Sid selection in the browser, the ActionHandler's update method is called, with the given selection.
 The handler can then accordingly construct buttons and other features.
 
-(The ActionHandler can be run as a standalone for testing).
+The ActionHandler can be run as a standalone for testing:  
+![Example ActionHandler](../docs/img/action_handler_stdalone.png)
 
 During startup, the Browser ask the configuration for an ActionHandler object.
 
