@@ -26,7 +26,7 @@ classifiers=[
         "Natural Language :: English",
         "Topic :: Software Development",
         "Topic :: Software Development :: Libraries",
-        "License :: OSI Approved :: GNU Lesser General Public License v3 or later (LGPLv3+)",
+        "License :: OSI Approved :: MIT License",
 ]
 keywords=[
     'vfx', 'cg', 'vfx-pipeline', 'cg-pipeline', 'path templates'

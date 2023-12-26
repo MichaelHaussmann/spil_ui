@@ -15,6 +15,8 @@ The UI is built using [QtPy](https://github.com/spyder-ide/qtpy), and [QDarkStyl
 
 It runs on all major DCCs as well as standalone. It was tested in Maya, Houdini, Nuke, and others.
 
+Spil_UI is released under the MIT Licence.
+
 To lean more about spil, please visit [spil.readthedocs.io](https://spil.readthedocs.io)
 
 For a technical overview of spil_ui, please read these [Notes](docs/notes.md).
@@ -67,4 +69,4 @@ General code cleanup is planned (typing, tests, etc.).
 
 Spil_UI has been released as early beta to help demonstrate the usage of Spil.
 
-**This documentation is work in progress.**
+*This documentation is work in progress.*
