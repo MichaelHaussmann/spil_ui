@@ -35,7 +35,7 @@ pip install git+https://github.com/MichaelHaussmann/spil_ui.git
 It installs `spil_ui`, `spil` and its dependencies.
 It also installs `spil_hamplet_conf`, a sample configuration. 
 
-A Qt package must be installed separately: PySide2, PySide6.
+A Qt package must be installed separately: PySide2, or PySide6.
 ```shell
 pip install PySide2
 ```

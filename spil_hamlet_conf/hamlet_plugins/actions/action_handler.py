@@ -1,4 +1,12 @@
 """
+This file is part of spil_ui, a UI using SPIL, The Simple Pipeline Lib.
+
+(C) copyright 2019-2024 Michael Haussmann, spil@xeo.info
+
+SPIL is free software and is distributed under the MIT License. See LICENCE file.
+"""
+
+"""
 The ActionHandler is a way to add actions to the Browser.
 On each Sid selection in the browser, the ActionHandler's update method is called, with the given selection.
 The handler can then accordingly construct buttons and other features.

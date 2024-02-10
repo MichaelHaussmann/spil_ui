@@ -1,14 +1,9 @@
 """
-This file is part of SPIL, The Simple Pipeline Lib.
+This file is part of spil_ui, a UI using SPIL, The Simple Pipeline Lib.
 
 (C) copyright 2019-2024 Michael Haussmann, spil@xeo.info
 
-SPIL is free software: you can redistribute it and/or modify it under the terms of the GNU Lesser General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
-
-SPIL is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more details.
-
-You should have received a copy of the GNU Lesser General Public License along with SPIL.
-If not, see <https://www.gnu.org/licenses/>.
+SPIL is free software and is distributed under the MIT License. See LICENCE file.
 """
 from __future__ import annotations
 from typing import Optional
@@ -50,7 +45,7 @@ from spil_ui.browser.ui.qt_helper import (
     addTableWidgetItem,
     table_css,
 )
-from spil import FindInPaths as Finder, Sid, conf
+from spil import FindInAll as Finder, Sid, conf
 
 import spil.util.log as sl
 
@@ -301,13 +296,13 @@ class Browser(QtWidgets.QMainWindow):
             for row, sid in enumerate(children):
 
                 # FIXME: hardcoded "p" -> config
-                sid_color = (
-                    sid_colors.get("published")
-                    if sid.get_with(state="p").exists()
-                    else None
-                )
+                # sid_color = (
+                #     sid_colors.get("published")
+                #     if sid.get_with(state="p").exists()
+                #     else None
+                # )
                 item = addTableWidgetItem(
-                    parent, sid, sid, row=row, column=0, fgcolor=sid_color
+                    parent, sid, sid, row=row, column=0  # , fgcolor=sid_color
                 )
 
                 for i, func in enumerate(table_bloc_functions):
