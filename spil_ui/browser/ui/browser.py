@@ -3,21 +3,12 @@ This file is part of spil_ui, a UI using SPIL, The Simple Pipeline Lib.
 
 (C) copyright 2019-2024 Michael Haussmann, spil@xeo.info
 
-SPIL is free software and is distributed under the MIT License. See LICENCE file.
+SPIL_UI is free software and is distributed under the MIT License. See LICENSE file.
 """
 from __future__ import annotations
 from typing import Optional
 
 """
-TODO:
-- code: cleanup, documentation, typing, formatting (apologies to you reader)
-- window opening size and position, better default, and store for user
-- stylesheet
-- tab order (and arrows left/right) for mouseless navigation
-- arrow keys (up/down) in listwidgets
-- last action in conf for double click / default action
-- actions refresh browser when done
-
     The Search circle is basically:
     search -> results -> selection / input -> current -> search
     
@@ -110,12 +101,12 @@ class Browser(QtWidgets.QMainWindow):
             search = Sid("*")
         log.debug(search)
 
-        # State filter  # FIXME: hard coded, to be changed
-        self.state_gb.setVisible(False)
-        self.ok_cb.setVisible(False)
-        # self.ok_cb.setText('publish')
-        self.wip_cb.setVisible(False)
-        # self.wip_cb.setText('work')
+        # State filter  work / publish # FIXME: hard coded, to be changed
+        # self.state_gb.setVisible(False)
+        # self.publish_cb.setVisible(False)
+        # self.work_cb.setVisible(False)
+        self.publish_cb.setText('publish')
+        self.work_cb.setText('work')
 
         self.init_extension_filters()
 
@@ -281,7 +272,11 @@ class Browser(QtWidgets.QMainWindow):
 
             # FIXME: hard coded -> config
             search = search + ("?version=>" if self.last_cb.isChecked() else "")
-            # search = search + '?state=~w'
+            if self.work_cb.isChecked() and self.publish_cb.isChecked():
+                search = search + ('?state=~w,p')
+            else:
+                search = search + ('?state=~w' if self.work_cb.isChecked() else "")
+                search = search + ('?state=~p' if self.publish_cb.isChecked() else "")
             if self.search.basetype in basetype_clipped_versions and not ext_filter:
                 search = search.replace("**", "*")
 
@@ -526,6 +521,8 @@ class Browser(QtWidgets.QMainWindow):
         self.sid_history_cb.currentIndexChanged.connect(self.set_sid_from_history)
         self.versions_tw.itemClicked.connect(self.select_search)
         self.last_cb.clicked.connect(self.build_versions)
+        self.publish_cb.clicked.connect(self.build_versions)
+        self.work_cb.clicked.connect(self.build_versions)
         # QtWidgets.QShortcut(QtCore.Qt.Key_Up, self.centralwidget, self.select_search)  # TODO: arrow keys in listwidgets
 
     def showEvent(self, arg=None):
