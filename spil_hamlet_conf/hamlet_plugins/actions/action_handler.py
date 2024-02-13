@@ -100,7 +100,7 @@ class ExampleActionHandler(AbstractActionHandler, QtWidgets.QWidget):
     @staticmethod
     def get_actions_by_sid(selection, action=None):
 
-        from spil_hamlet_conf.hamlet_plugins.actions.example_actions import get_action_for_sid  # fmt: skip
+        from hamlet_plugins.actions.example_actions import get_action_for_sid  # fmt: skip
         actions = get_action_for_sid(selection)
 
         if action:

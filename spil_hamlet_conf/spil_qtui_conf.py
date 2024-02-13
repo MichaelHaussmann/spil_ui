@@ -8,7 +8,7 @@ SPIL is free software and is distributed under the MIT License. See LICENCE file
 """
 This is the example configuration for spil_ui
 """
-from spil_hamlet_conf.hamlet_plugins.actions.utils import get_size, get_time
+from hamlet_plugins.actions.utils import get_size, get_time
 
 sid_usage_history_len = 20
 application_name = "Spil"
