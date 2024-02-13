@@ -5,9 +5,6 @@ Spil UI is part of [Spil, the Simple Pipeline Lib](https://github.com/MichaelHau
 It is a simple Qt UI to browse Sids (Scene IDs) using Spil's `Finder` classes.
 It is dynamic, and adapts to the Sids length and content.
 
-ActionHandlers can be implemented to show and call actions matching the selected Sid.  
-An example ActionHandler is included.
-
 [![Spil Qt UI](docs/img/spil_ui_dark.png)](https://github.com/MichaelHaussmann/spil_ui)
 
 The UI is built using [QtPy](https://github.com/spyder-ide/qtpy), and [QDarkStyle](https://github.com/ColinDuquesnoy/QDarkStyleSheet), and works with PyQt5, PySide2, PyQt6, PySide6.
@@ -15,11 +12,16 @@ The UI is built using [QtPy](https://github.com/spyder-ide/qtpy), and [QDarkStyl
 
 It runs on all major DCCs as well as standalone. It was tested in Maya, Houdini, Nuke, and others.
 
+ActionHandlers can be implemented to show and call actions matching the selected Sid.    
+An example ActionHandler is included (with "explore" and "open" actions).
+
 Spil_UI is released under the MIT Licence.
 
 To lean more about spil, please visit [spil.readthedocs.io](https://spil.readthedocs.io)
 
-For a technical overview of spil_ui, please read these [Notes](docs/notes.md).
+Usage documentation: [Usage](docs/usage.md).
+
+Technical overview of spil_ui, please read these [Notes](docs/notes.md).
 
 ## Installation
 
@@ -68,5 +70,17 @@ It is work in progress. There are still hard coded elements in the browser.
 General code cleanup is planned (typing, tests, etc.).
 
 Spil_UI has been released as early beta to help demonstrate the usage of Spil.
+
+### Todo
+
+- code: cleanup, documentation, typing, formatting (apologies to you reader)
+- window opening size and position, better default, and store for user
+- stylesheet & choice of light/dark
+- tab order (and arrows left/right) for mouseless navigation
+- arrow keys (up/down) in listwidgets
+- last action in conf for double click / default action
+- double-click "unsticks"
+- actions refresh browser when done
+- use Getter to show images
 
 *This documentation is work in progress.*
