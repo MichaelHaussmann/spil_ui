@@ -11,7 +11,7 @@ exclude = [".gitignore"]
 
 [project]
 name = "spil_ui"
-version = "0.0.5rc1"
+version = "0.1.0"
 description = "Qt UI for Spil, The Simple Pipeline Lib."
 readme = "README.md"
 authors = [{ name = "Michael Haussmann", email = "spil@xeo.info" }]
@@ -26,14 +26,15 @@ classifiers=[
         "Natural Language :: English",
         "Topic :: Software Development",
         "Topic :: Software Development :: Libraries",
-        "License :: OSI Approved :: GNU Lesser General Public License v3 or later (LGPLv3+)",
+        "License :: OSI Approved :: MIT License",
 ]
 keywords=[
     'vfx', 'cg', 'vfx-pipeline', 'cg-pipeline', 'path templates'
 ]
 dependencies = [
     "spil",
-    "Qt.py"
+    "qtpy",
+    "qdarkstyle"
 ]
 requires-python = ">=3.7"
 
@@ -41,7 +42,7 @@ requires-python = ">=3.7"
 dev = ['pytest']
 
 [project.urls]
-"Homepage" = "https://github.com/MichaelHaussmann/spil"
+"Homepage" = "https://github.com/MichaelHaussmann/spil_ui"
 "Documentation" = "https://spil.readthedocs.io"
 
 [tool.pytest.ini_options]

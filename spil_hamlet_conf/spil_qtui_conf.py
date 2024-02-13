@@ -1,6 +1,11 @@
 """
-This file is part of SPIL, The Simple Pipeline Lib.
+This file is part of spil_ui, a UI using SPIL, The Simple Pipeline Lib.
 
+(C) copyright 2019-2024 Michael Haussmann, spil@xeo.info
+
+SPIL is free software and is distributed under the MIT License. See LICENCE file.
+"""
+"""
 This is the example configuration for spil_ui
 """
 from spil_hamlet_conf.hamlet_plugins.actions.utils import get_size, get_time

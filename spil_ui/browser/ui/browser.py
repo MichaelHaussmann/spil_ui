@@ -1,28 +1,14 @@
 """
-This file is part of SPIL, The Simple Pipeline Lib.
+This file is part of spil_ui, a UI using SPIL, The Simple Pipeline Lib.
 
-(C) copyright 2019-2023 Michael Haussmann, spil@xeo.info
+(C) copyright 2019-2024 Michael Haussmann, spil@xeo.info
 
-SPIL is free software: you can redistribute it and/or modify it under the terms of the GNU Lesser General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
-
-SPIL is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more details.
-
-You should have received a copy of the GNU Lesser General Public License along with SPIL.
-If not, see <https://www.gnu.org/licenses/>.
+SPIL_UI is free software and is distributed under the MIT License. See LICENSE file.
 """
 from __future__ import annotations
 from typing import Optional
 
 """
-TODO:
-- code: cleanup, documentation, typing, formatting (apologies to you reader)
-- window opening size and position, better default, and store for user
-- stylesheet
-- tab order (and arrows left/right) for mouseless navigation
-- arrow keys (up/down) in listwidgets
-- last action in conf for double click / default action
-- actions refresh browser when done
-
     The Search circle is basically:
     search -> results -> selection / input -> current -> search
     
@@ -39,11 +25,9 @@ import os
 from spil import logging
 from collections import OrderedDict
 
-# Uses Qt.py
-from Qt import QtCore, QtCompat, QtWidgets, QtGui
-
-# from Qt.QtWidgets import QMenu, QAction
-# from Qt.QtCore import Qt
+# Uses qtpy
+import qtpy
+from qtpy import QtCore, QtWidgets, QtGui
 
 from spil.util.utils import uniqfy  # TODO: refactor sid history
 from spil_ui.browser.ui.qt_helper import (
@@ -52,7 +36,7 @@ from spil_ui.browser.ui.qt_helper import (
     addTableWidgetItem,
     table_css,
 )
-from spil import FindInPaths as Finder, Sid, conf
+from spil import FindInAll as Finder, Sid, conf
 
 import spil.util.log as sl
 
@@ -91,7 +75,10 @@ class Browser(QtWidgets.QMainWindow):
 
     def __init__(self, search=None):
         super(Browser, self).__init__()
-        QtCompat.loadUi(ui_path, self)
+        # For some ominous reason, this does not work:
+        # qtpy.uic.loadUi(ui_path, self)
+        from qtpy.uic import loadUi
+        loadUi(ui_path, self)
         self.setWindowTitle(f"{browser_title} - Browser")
 
         # init sources
@@ -114,12 +101,12 @@ class Browser(QtWidgets.QMainWindow):
             search = Sid("*")
         log.debug(search)
 
-        # State filter  # FIXME: hard coded, to be changed
-        self.state_gb.setVisible(False)
-        self.ok_cb.setVisible(False)
-        # self.ok_cb.setText('publish')
-        self.wip_cb.setVisible(False)
-        # self.wip_cb.setText('work')
+        # State filter  work / publish # FIXME: hard coded, to be changed
+        # self.state_gb.setVisible(False)
+        # self.publish_cb.setVisible(False)
+        # self.work_cb.setVisible(False)
+        self.publish_cb.setText('publish')
+        self.work_cb.setText('work')
 
         self.init_extension_filters()
 
@@ -285,7 +272,11 @@ class Browser(QtWidgets.QMainWindow):
 
             # FIXME: hard coded -> config
             search = search + ("?version=>" if self.last_cb.isChecked() else "")
-            # search = search + '?state=~w'
+            if self.work_cb.isChecked() and self.publish_cb.isChecked():
+                search = search + ('?state=~w,p')
+            else:
+                search = search + ('?state=~w' if self.work_cb.isChecked() else "")
+                search = search + ('?state=~p' if self.publish_cb.isChecked() else "")
             if self.search.basetype in basetype_clipped_versions and not ext_filter:
                 search = search.replace("**", "*")
 
@@ -300,13 +291,13 @@ class Browser(QtWidgets.QMainWindow):
             for row, sid in enumerate(children):
 
                 # FIXME: hardcoded "p" -> config
-                sid_color = (
-                    sid_colors.get("published")
-                    if sid.get_with(state="p").exists()
-                    else None
-                )
+                # sid_color = (
+                #     sid_colors.get("published")
+                #     if sid.get_with(state="p").exists()
+                #     else None
+                # )
                 item = addTableWidgetItem(
-                    parent, sid, sid, row=row, column=0, fgcolor=sid_color
+                    parent, sid, sid, row=row, column=0  # , fgcolor=sid_color
                 )
 
                 for i, func in enumerate(table_bloc_functions):
@@ -530,6 +521,8 @@ class Browser(QtWidgets.QMainWindow):
         self.sid_history_cb.currentIndexChanged.connect(self.set_sid_from_history)
         self.versions_tw.itemClicked.connect(self.select_search)
         self.last_cb.clicked.connect(self.build_versions)
+        self.publish_cb.clicked.connect(self.build_versions)
+        self.work_cb.clicked.connect(self.build_versions)
         # QtWidgets.QShortcut(QtCore.Qt.Key_Up, self.centralwidget, self.select_search)  # TODO: arrow keys in listwidgets
 
     def showEvent(self, arg=None):
@@ -605,8 +598,17 @@ def app(sid: Optional[Sid | str] = None) -> None:
 
     QtCore.QCoreApplication.setAttribute(QtCore.Qt.AA_ShareOpenGLContexts)  # fix
     app = QtWidgets.QApplication.instance() or QtWidgets.QApplication([])
-    # import cProfile  # profiling
+
+    # darkstyle
+    import qdarkstyle
+    app.setStyleSheet(qdarkstyle.load_stylesheet(palette=qdarkstyle.DarkPalette))
+    # app.setStyleSheet(qdarkstyle.load_stylesheet(palette=qdarkstyle.LightPalette))
+    # app.setStyleSheet(qdarkstyle.load_stylesheet())
+
+    # profiling
+    # import cProfile
     # cProfile.run('open_browser(sid, do_new=True)', sort=1)
+
     open_browser(sid)
     app.exec_()
 

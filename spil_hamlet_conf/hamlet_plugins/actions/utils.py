@@ -1,3 +1,10 @@
+"""
+This file is part of spil_ui, a UI using SPIL, The Simple Pipeline Lib.
+
+(C) copyright 2019-2024 Michael Haussmann, spil@xeo.info
+
+SPIL is free software and is distributed under the MIT License. See LICENCE file.
+"""
 from spil import log
 from spil.util.caching import lru_kw_cache as cache
 from spil_ui.util.time_tools import toHumanReadableLapse

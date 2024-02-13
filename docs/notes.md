@@ -1,7 +1,10 @@
 
-## Technical Notes
 
-### General architecture
+# Technical Notes
+
+For usage and general understanding see [Usage](usage.md).
+
+## General architecture
 
 The Browser window launches searches for a search sid.
 The resulting "current Sid" is represented in clickable parts:
@@ -16,7 +19,7 @@ A new search is launched when either
 An ActionHandler uses the selected Sid to handle actions.
 Typically showing Buttons and running functions.
 
-### Browser
+## Browser
 
 The "Browser" has 3 areas:
 - Top: "Sids": Last used Sids / Current Sid / Search Sid
@@ -81,7 +84,8 @@ The ActionHandler is a way to add actions to the Browser.
 On each Sid selection in the browser, the ActionHandler's update method is called, with the given selection.
 The handler can then accordingly construct buttons and other features.
 
-(The ActionHandler can be run as a standalone for testing).
+The ActionHandler can be run as a standalone for testing:  
+![Example ActionHandler](../docs/img/action_handler_stdalone.png)
 
 During startup, the Browser ask the configuration for an ActionHandler object.
 

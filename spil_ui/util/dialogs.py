@@ -1,32 +1,20 @@
 # -*- coding: utf-8 -*-
 """
-This file is part of SPIL, The Simple Pipeline Lib.
+This file is part of spil_ui, a UI using SPIL, The Simple Pipeline Lib.
 
-(C) copyright 2019-2022 Michael Haussmann, spil@xeo.info
+(C) copyright 2019-2024 Michael Haussmann, spil@xeo.info
 
-SPIL is free software: you can redistribute it and/or modify it under the terms of the GNU Lesser General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
-
-SPIL is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more details.
-
-You should have received a copy of the GNU Lesser General Public License along with SPIL.
-If not, see <https://www.gnu.org/licenses/>.
+SPIL is free software and is distributed under the MIT License. See LICENCE file.
 
 Created on 22 dec. 2011
 @author: michael haussmann
 
 """
-# Uses Qt.py
-from Qt.QtWidgets import (
-    QMessageBox,
-    QApplication,
-    QWidget,
-    QFileDialog,
-    QInputDialog,
-    QLineEdit,
-)
-from Qt.QtWidgets import QDialog
-from Qt.QtWidgets import QMainWindow
-from Qt.QtCore import QCoreApplication
+# Uses qtpy
+from qtpy.QtWidgets import QMessageBox, QApplication, QWidget, QFileDialog, QInputDialog, QLineEdit
+from qtpy.QtWidgets import QDialog
+from qtpy.QtWidgets import QMainWindow
+from qtpy.QtCore import QCoreApplication
 
 from spil_ui.conf import application_name
 
@@ -266,38 +254,16 @@ if __name__ == "__main__":
     print(result)
     """
 
-    print(
-        Dialogs().getTextField(
-            "Please enter a very long text here: ", "...", size=(200, 400)
-        )
-    )
+    print(Dialogs().getTextField("Please enter a very long text here: ", "...", size=(200, 400)))
     print(Dialogs().getText("Default choice", "Not a bad choice either"))
 
-    # print Dialogs.buttonChoice('Use last saved version', 'Use current scene', title='Current scene was modified... what would you like to do?', windowTitle='Tomato')
-    print(
-        Dialogs.multiButtonChoice(
-            ["Default choice", "Not a bad choice either", "utlimatively best choice"],
-            title="Up to you... \nWhat would you like to do?",
-            windowTitle="Tomato",
-        )
-    )
+    # print Dialogs.buttonChoice("Use last saved version", "Use current scene", title="Current scene was modified... what would you like to do?", windowTitle="Tomato")
+    print(Dialogs.multiButtonChoice(["Default choice", "Not a bad choice either", "utlimatively best choice"], title="Up to you... \nWhat would you like to do?", windowTitle="Tomato"))
 
     print(Dialogs().warn("Are you sure you want to start this?"))
-    print(
-        Dialogs().choice(
-            "choose now between all this crap", ["absolut", "omega", "jack"], "toto"
-        )
-    )
-    print(
-        Dialogs().choice(
-            "choose now between all this crap", ["absolut", "omega", "jack"], "omeg"
-        )
-    )
-    print(
-        Dialogs().choice(
-            "choose now between all this crap", ["absolut", "omega", "jack"], "omega"
-        )
-    )
+    print(Dialogs().choice("choose now between all this crap", ["absolut", "omega", "jack"], "toto"))
+    print(Dialogs().choice("choose now between all this crap", ["absolut", "omega", "jack"], "omeg"))
+    print(Dialogs().choice("choose now between all this crap", ["absolut", "omega", "jack"], "omega"))
 
     print(Dialogs().inform("Ok, good answer"))
     print(Dialogs().confirm("Do you like user interfaces?"))

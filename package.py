@@ -2,15 +2,16 @@
 
 name = 'spil_ui'
 
-version = '0.0.4'
+version = '0.1.0'
 
 requires = [
     "spil",
-    "Qt.py",
+    "qtpy",
+    "QDarkStyle"
 ]
 
 
-description = "https://github.com/MichaelHaussmann/spil"
+description = "https://github.com/MichaelHaussmann/spil_ui"
 
 authors = ['Michael Haussmann']
 
