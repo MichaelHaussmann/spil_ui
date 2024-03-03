@@ -37,23 +37,21 @@ Technical overview of **spil_ui**: [Tech Notes](docs/notes.md).
 spil_UI can be pip installed.
 
 ```shell
-# Install latest release (recommended)
 pip install spil_ui
-
-# Or install from repo 
-pip install git+https://github.com/MichaelHaussmann/spil_ui.git
 ```
-It installs `spil_ui`, `spil` and its dependencies.
-It also installs `spil_hamplet_conf`, a sample configuration. 
+It installs `spil_ui`, `spil` and its dependencies.  
+It also installs `spil_hamplet_conf`, a sample configuration.   
 
-A Qt package must be installed separately: PySide2, or PySide6.
+A Qt package must be installed separately.    
+Any [QtPy](https://github.com/spyder-ide/qtpy) compatible Qt version: PySide2, PySide6, PyQt5, or PyQt6.  
+  
 ```shell
 pip install PySide2
 ```
 
 ### Running
 
-If you need test data, you can initialize dummy files and folders from the sample configuration: 
+Initialize demo files and folders from the sample configuration: 
 ```python
 import spil  # adds spil_hamlet_conf to the python path
 import hamlet_scripts.save_examples_to_mock_fs as mfs
@@ -66,7 +64,7 @@ from spil_ui import app
 app()
 ```
 
-Note: from within a DCC already running a QApplication Instance, run:
+From within a DCC already running a QApplication Instance, run:
 ```python
 from spil_ui import open_browser
 open_browser()
@@ -82,7 +80,6 @@ Spil_UI has been released as early beta to help demonstrate the usage of Spil.
 
 ### Todo
 
-- pagination
 - code: cleanup, documentation, typing, formatting (apologies to you reader)
 - window opening size and position, better default, and store for user
 - stylesheet & choice of light/dark
