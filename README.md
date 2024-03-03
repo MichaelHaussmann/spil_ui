@@ -80,7 +80,6 @@ Spil_UI has been released as early beta to help demonstrate the usage of Spil.
 
 ### Todo
 
-- pagination
 - code: cleanup, documentation, typing, formatting (apologies to you reader)
 - window opening size and position, better default, and store for user
 - stylesheet & choice of light/dark
