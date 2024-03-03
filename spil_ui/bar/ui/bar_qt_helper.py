@@ -4,23 +4,24 @@ https://stackoverflow.com/a/28976373
 
 """
 
-from qtpy.QtWidgets import QLineEdit, QCompleter
+from qtpy.QtWidgets import QLineEdit
 from qtpy.QtCore import Qt, QEvent
-from qtpy.QtCore import Signal
 
 
-class MyLineEdit(QLineEdit):
-    tabPressed = Signal()
-    keyRight = Signal()
-    keyLeft = Signal()
+class EventLineEdit(QLineEdit):
+    """
+    QLineEdit implementing events to navigate the autocompletion data.
+
+    tabPressed => next completion
+    keyRight => adds "/" (does not work properly, because it does not update the size of the bar)
+
+    """
 
     def __init__(self, completer, parent=None):
         super().__init__(parent)
         # self._compl = QCompleter()
+        # self.bar = parent
         self._compl = completer
-        self.tabPressed.connect(self.next_completion)
-        self.keyRight.connect(self.key_right)
-        self.keyLeft.connect(self.key_left)
 
     def next_completion(self):
         index = self._compl.currentIndex()
@@ -32,6 +33,7 @@ class MyLineEdit(QLineEdit):
     def key_right(self):
         if not self.text().endswith("/"):
             self.setText(self.text() + "/")
+            # self.bar.text_changed()  # does not work
         # else:
         #     self.next_completion()
 
@@ -43,13 +45,12 @@ class MyLineEdit(QLineEdit):
 
     def event(self, event):
         if event.type() == QEvent.KeyPress and event.key() == Qt.Key_Tab:
-            self.tabPressed.emit()
+            self.next_completion()
             return True
         if event.type() == QEvent.KeyPress and event.key() == Qt.Key_Right:
-            # self.keyRight.emit()
             self.key_right()
             return True
         if event.type() == QEvent.KeyPress and event.key() == Qt.Key_Left:
-            self.keyLeft.emit()
+            self.key_left()
             return True
         return super().event(event)

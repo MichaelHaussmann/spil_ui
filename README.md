@@ -9,10 +9,16 @@ It ships a dynamic Sid Browser and Action launcher.
 The **Browser** finds Sids (Scene IDs) using Spil's `Finder` classes.
 It is dynamic, and adapts to the Sids length and content.
 
-The UI is built using [QtPy](https://github.com/spyder-ide/qtpy), and [QDarkStyle](https://github.com/ColinDuquesnoy/QDarkStyleSheet), and works with PyQt5, PySide2, PyQt6, PySide6.
+Spil UI also includes a simple Sid Search Bar. 
+
+![Spil Qt UI Bar](docs/img/bar.png)
+
+The **Bar** allows quick keyboard navigation by using tab and arrow keys.
+
+Both UIs is built using [QtPy](https://github.com/spyder-ide/qtpy), and [QDarkStyle](https://github.com/ColinDuquesnoy/QDarkStyleSheet), and work with PyQt5, PySide2, PyQt6, PySide6.
 (Spil works with python >=3.7)
 
-It runs on all major DCCs as well as standalone. It was tested in Maya, Houdini, Nuke, and others.
+They runs on all major DCCs as well as standalone. It was tested in Maya, Houdini, Nuke, and others.
 
 ActionHandlers can be implemented to show and call actions matching the selected Sid.    
 An example ActionHandler is included (with "explore" and "open" actions).
@@ -76,6 +82,7 @@ Spil_UI has been released as early beta to help demonstrate the usage of Spil.
 
 ### Todo
 
+- pagination
 - code: cleanup, documentation, typing, formatting (apologies to you reader)
 - window opening size and position, better default, and store for user
 - stylesheet & choice of light/dark
