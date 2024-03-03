@@ -280,10 +280,12 @@ class Browser(QtWidgets.QMainWindow):
             if self.search.basetype in basetype_clipped_versions and not ext_filter:
                 search = search.replace("**", "*")
 
+            # self.input_sid_le.setText(search)
             log.debug("Final search: {}".format(search))
 
             # this option sorts Sids - # TODO profile
-            children = sorted(list(Finder().find(search, as_sid=True)))
+            children = sorted(Finder().find(search, as_sid=True))
+            # children = sorted(list(Finder().find(search, as_sid=True)))
             # children = sorted(list(Finder().find(search, as_sid=False)))
             # children = list(filter(bool, [Sid(s) for s in children]))
 
@@ -313,6 +315,9 @@ class Browser(QtWidgets.QMainWindow):
                     self.update_current_sid()
 
                 # parent.itemClicked.connect(self.select_search)
+                if row > max:
+                    print(f"over {max}")
+                    break
 
             parent.setStyleSheet(table_css)
             parent.resizeColumnsToContents()
@@ -592,8 +597,6 @@ def app(sid: Optional[Sid | str] = None) -> None:
     Args:
         sid: Optional Sid instance or String to start with
 
-    Returns:
-
     """
 
     QtCore.QCoreApplication.setAttribute(QtCore.Qt.AA_ShareOpenGLContexts)  # fix
@@ -620,4 +623,4 @@ if __name__ == "__main__":
     setLevel(ERROR)
 
     sid = "hamlet/a/char/ophelia"
-    app()
+    app(sid)
