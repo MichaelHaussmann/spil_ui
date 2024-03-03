@@ -59,7 +59,7 @@ class ExampleActionHandler(AbstractActionHandler, QtWidgets.QWidget):
 
         actions = self.get_actions_by_sid(self.selection)
         for action in actions:
-            button = QtWidgets.QPushButton(action, self.parent_window)
+            button = QtWidgets.QPushButton("&" + action, self.parent_window)
             button.setToolTip(
                 (actions.get(action).__doc__ or "").strip().replace("\t", "")
             )
