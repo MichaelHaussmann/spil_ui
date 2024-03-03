@@ -103,6 +103,7 @@ The ActionHandler implements Buttons (and potentially other Qt Widgets),
 and handles the Button pushes and action execution.
 The Browser only serves for browsing.
 
+An example ActionHandler is shipped in `spil_hamplet_conf/actions`.  
 
 ### "Dialogs" tools
 
