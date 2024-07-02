@@ -280,7 +280,6 @@ class Browser(QtWidgets.QMainWindow):
             if self.search.basetype in basetype_clipped_versions and not ext_filter:
                 search = search.replace("**", "*")
 
-            # self.input_sid_le.setText(search)
             log.debug("Final search: {}".format(search))
 
             # this option sorts Sids - # TODO profile
@@ -315,9 +314,6 @@ class Browser(QtWidgets.QMainWindow):
                     self.update_current_sid()
 
                 # parent.itemClicked.connect(self.select_search)
-                if row > max:
-                    print(f"over {max}")
-                    break
 
             parent.setStyleSheet(table_css)
             parent.resizeColumnsToContents()
