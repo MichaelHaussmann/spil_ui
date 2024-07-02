@@ -4,14 +4,14 @@ Spil UI is part of [Spil, the Simple Pipeline Lib](https://github.com/MichaelHau
 
 It ships a dynamic Sid Browser and Action launcher.
 
-[![Spil Qt UI](https://raw.githubusercontent.com/MichaelHaussmann/spil_ui/main/docs/img/spil_ui_dark.png?token=GHSAT0AAAAAACT3SBZGNFHI6PANN2SOK7BOZUEMPLA)](https://github.com/MichaelHaussmann/spil_ui)
+[![Spil Qt UI](https://raw.githubusercontent.com/MichaelHaussmann/spil_ui/main/docs/img/spil_ui_dark.png)](https://github.com/MichaelHaussmann/spil_ui)
 
 The **Browser** finds Sids (Scene IDs) using Spil's `Finder` classes.  
 It is dynamic, and adapts to the Sids length and content.  
 
 Spil UI also includes a simple Sid Search Bar. 
 
-![Spil Qt UI Bar](https://raw.githubusercontent.com/MichaelHaussmann/spil_ui/main/docs/img/bar.png?token=GHSAT0AAAAAACT3SBZGJFFV3ZPHHFN22AMAZUEMTYQ)
+![Spil Qt UI Bar](https://raw.githubusercontent.com/MichaelHaussmann/spil_ui/main/docs/img/bar.png)
 
 The **Bar** allows quick keyboard navigation by using tab and arrow keys.
 
