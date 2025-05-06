@@ -11,12 +11,16 @@ import inspect
 
 # stubs that are replaced by imports
 is_leaf = None
+sid_usage_history_len = 0
 browser_title = ""
 get_action_handler = None
 table_bloc_columns = []
 table_bloc_functions = []
 extension_filters = []
 search_reset_keys = []
+state_work_field = ""
+state_publish_field = ""
+publish_color = None
 basetype_to_cut = {}
 basetype_clipped_versions = []
 

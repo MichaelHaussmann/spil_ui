@@ -1,7 +1,7 @@
 """
 This file is part of spil_ui, a UI using SPIL, The Simple Pipeline Lib.
 
-(C) copyright 2019-2024 Michael Haussmann, spil@xeo.info
+(C) copyright 2019-2025 Michael Haussmann, spil@xeo.info
 
 SPIL_UI is free software and is distributed under the MIT License. See LICENSE file.
 """
@@ -48,11 +48,13 @@ log.setLevel(logging.INFO)
 UserRole = QtCore.Qt.UserRole
 ui_path = os.path.join(os.path.dirname(__file__), "qt/browser.ui")
 
-from spil_ui.conf import is_leaf, browser_title, get_action_handler
+from spil_ui.conf import is_leaf, browser_title, get_action_handler, publish_color
 from spil_ui.conf import table_bloc_columns, table_bloc_functions, extension_filters
 from spil_ui.conf import search_reset_keys, basetype_to_cut, basetype_clipped_versions
+from spil_ui.conf import state_work_field, state_publish_field
 
-sid_colors = {"published": QtGui.QColor(85, 230, 85)}
+if publish_color:
+    sid_colors = {"published": QtGui.QColor(*publish_color)}
 
 
 class Browser(QtWidgets.QMainWindow):
@@ -273,10 +275,11 @@ class Browser(QtWidgets.QMainWindow):
             # FIXME: hard coded -> config
             search = search + ("?version=>" if self.last_cb.isChecked() else "")
             if self.work_cb.isChecked() and self.publish_cb.isChecked():
-                search = search + ('?state=~w,p')
+                search = search + (f'?state=~{state_work_field},{state_publish_field}')
             else:
-                search = search + ('?state=~w' if self.work_cb.isChecked() else "")
-                search = search + ('?state=~p' if self.publish_cb.isChecked() else "")
+                search = search + (f'?state=~{state_work_field}' if self.work_cb.isChecked() else "")
+                search = search + (f'?state=~{state_publish_field}' if self.publish_cb.isChecked() else "")
+
             if self.search.basetype in basetype_clipped_versions and not ext_filter:
                 search = search.replace("**", "*")
 
@@ -291,14 +294,15 @@ class Browser(QtWidgets.QMainWindow):
             parent.setRowCount(len(children))
             for row, sid in enumerate(children):
 
-                # FIXME: hardcoded "p" -> config
-                # sid_color = (
-                #     sid_colors.get("published")
-                #     if sid.get_with(state="p").exists()
-                #     else None
-                # )
+                # FIXME: should go into plugin
+                if publish_color:
+                    sid_color = (
+                        sid_colors.get("published")
+                        if sid.get_with(state=state_publish_field).exists()
+                        else None
+                    )
                 item = addTableWidgetItem(
-                    parent, sid, sid, row=row, column=0  # , fgcolor=sid_color
+                    parent, sid, sid, row=row, column=0, fgcolor=(sid_color if publish_color else None)
                 )
 
                 for i, func in enumerate(table_bloc_functions):
