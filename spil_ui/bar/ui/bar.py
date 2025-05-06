@@ -180,7 +180,7 @@ def open_bar(
         bar_window = None
 
     if do_new or not bar_window:
-        bar_window = Bar(search=sid)
+        bar_window = Bar(search=str(sid) if sid else None)
         bar_window.show()
     else:
         bar_window.activateWindow()
