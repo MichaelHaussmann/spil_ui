@@ -1,7 +1,7 @@
 """
 This file is part of spil_ui, a UI using SPIL, The Simple Pipeline Lib.
 
-(C) copyright 2019-2024 Michael Haussmann, spil@xeo.info
+(C) copyright 2019-2026 Michael Haussmann, spil@xeo.info
 
 SPIL_UI is free software and is distributed under the MIT License. See LICENSE file.
 """
@@ -208,8 +208,13 @@ def app(sid: Optional[Sid | str] = None) -> None:
     app = QtWidgets.QApplication.instance() or QtWidgets.QApplication([])
 
     # darkstyle
-    import qdarkstyle
-    app.setStyleSheet(qdarkstyle.load_stylesheet(palette=qdarkstyle.DarkPalette))
+    try:
+        import qdarkstyle
+        app.setStyleSheet(qdarkstyle.load_stylesheet(palette=qdarkstyle.DarkPalette))
+    except Exception as e:
+        log.warning(f"[spil_ui.bar] qdarkstyle could not be used ({e})")
+    # app.setStyleSheet(qdarkstyle.load_stylesheet(palette=qdarkstyle.LightPalette))
+    # app.setStyleSheet(qdarkstyle.load_stylesheet())
 
     # profiling
     # import cProfile
