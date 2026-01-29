@@ -605,11 +605,11 @@ def app(sid: Optional[Sid | str] = None) -> None:
     # darkstyle
     try:
         import qdarkstyle
-        app.setStyleSheet(qdarkstyle.load_stylesheet(palette=qdarkstyle.DarkPalette))
+        app.setStyleSheet(qdarkstyle.load_stylesheet(palette=qdarkstyle.DarkPalette))  # dark mode
+        # app.setStyleSheet(qdarkstyle.load_stylesheet(palette=qdarkstyle.LightPalette))  # light mode
+        # app.setStyleSheet(qdarkstyle.load_stylesheet())  # as per documentation
     except Exception as e:
         log.warning(f"[spil_ui.browser] qdarkstyle could not be used ({e})")
-    # app.setStyleSheet(qdarkstyle.load_stylesheet(palette=qdarkstyle.LightPalette))
-    # app.setStyleSheet(qdarkstyle.load_stylesheet())
 
     # profiling
     # import cProfile
